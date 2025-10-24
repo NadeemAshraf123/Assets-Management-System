@@ -1,110 +1,85 @@
-import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUsers, faBuilding } from '@fortawesome/free-solid-svg-icons';
-import { Home, Settings, FolderKanban } from 'lucide-react';
+import { useState } from "react";
+import { FaChevronDown, FaChevronRight, FaHome, FaFolder, FaCog } from "react-icons/fa";
+import { Link } from "react-router-dom";
 
-const Sidebar: React.FC = () => {
-  const location = useLocation();
-  const [adminExpanded, setAdminExpanded] = useState(true);
-  const [settingsExpanded, setSettingsExpanded] = useState(true);
+const Sidebar = () => {
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
 
-  const isActive = (href: string) => location.pathname === href;
+  const toggleMenu = (menu: string) => {
+    setOpenMenu(openMenu === menu ? null : menu);
+  };
 
   return (
-    <aside className="w-[390px] h-screen bg-[#0F766E] border-r shadow-sm flex flex-col py-4">
-      <div className="px-4 pb-4 text-xl font-[Montserrat] tracking-widest font-bold line text-[#F6EDDE]">ASSETS
-        <p className='text-xs'>M A N A G E M E N T   S Y S T E M</p>
+    <aside className="w-64 bg-[#0F766E] text-white h-screen flex flex-col fixed">
+      {/* Logo */}
+      <div className="p-4 text-center font-bold text-lg border-b border-emerald-800">
+        <span className="text-emerald-300">ASSETS</span> MANAGEMENT SYSTEM
       </div>
-      <nav className="flex flex-col gap-2 text-sm text-gray-700">
+
+      {/* Menu */}
+      <nav className="flex-1 overflow-y-auto p-2">
+        {/* Dashboard */}
         <Link
-          to="/dashboard"
-          className={`flex items-center gap-2 px-4 py-2 rounded-md ${
-            isActive('/dashboard') ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'
-          }`}
+          to="/"
+          className="flex items-center gap-3 p-2 rounded-lg hover:bg-emerald-800"
         >
-          <Home size={18} />
+          <FaHome />
           <span>Dashboard</span>
         </Link>
 
-        <Link
-          to="/portfolio"
-          className={`flex items-center gap-2 px-4 py-2 rounded-md ${
-            isActive('/portfolio') ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'
-          }`}
-        >
-          <FolderKanban size={18} />
-          <span>Portfolio</span>
-        </Link>
-
-        <Link
-          to="/sales"
-          className={`flex items-center gap-2 px-4 py-2 rounded-md ${
-            isActive('/sales') ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'
-          }`}
-        >
-          <FontAwesomeIcon icon={faUsers} />
-          <span>Sales Manager</span>
-        </Link>
-
-        <Link
-          to="/service"
-          className={`flex items-center gap-2 px-4 py-2 rounded-md ${
-            isActive('/service') ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'
-          }`}
-        >
-          <FontAwesomeIcon icon={faUsers} />
-          <span>Service Manager</span>
-        </Link>
-
-        {/* Administration Group */}
+        {/* Portfolio */}
         <div>
           <button
-            onClick={() => setAdminExpanded((prev) => !prev)}
-            className={`w-full flex items-center justify-between px-4 py-2 rounded-md ${
-              location.pathname.includes('/branches') ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'
-            }`}
+            onClick={() => toggleMenu("portfolio")}
+            className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-emerald-800"
           >
-            <div className="flex items-center gap-2">
-              <Settings size={18} />
-              <span>Administration</span>
-            </div>
-            <span>{adminExpanded ? '▾' : '▸'}</span>
+            <span className="flex items-center gap-3">
+              <FaFolder />
+              Portfolio
+            </span>
+            {openMenu === "portfolio" ? <FaChevronDown /> : <FaChevronRight />}
           </button>
+          {openMenu === "portfolio" && (
+            <div className="ml-8 flex flex-col gap-2 mt-1">
+              <Link to="/portfolio/explore" className="hover:text-emerald-300">
+                Explore
+              </Link>
+              <Link to="/portfolio/survey" className="hover:text-emerald-300">
+                Survey
+              </Link>
+            </div>
+          )}
+        </div>
 
-          {adminExpanded && (
-            <div className="ml-6 mt-1 flex flex-col gap-1">
-              {/* Settings Subgroup */}
-              <button
-                onClick={() => setSettingsExpanded((prev) => !prev)}
-                className={`w-full flex items-center justify-between px-4 py-2 rounded-md ${
-                  location.pathname.includes('/branches') ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <Settings size={18} />
-                  <span>Settings</span>
-                </div>
-                <span>{settingsExpanded ? '▾' : '▸'}</span>
-              </button>
-
-              {settingsExpanded && (
-                <div className="ml-6 mt-1 flex flex-col gap-1">
-                  <Link
-                    to="/branches"
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md ${
-                      isActive('/branches') ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'
-                    }`}
-                  >
-                    <FontAwesomeIcon icon={faBuilding} />
-                    <span>Branches</span>
-                  </Link>
-                </div>
-              )}
+        {/* Administration */}
+        <div>
+          <button
+            onClick={() => toggleMenu("admin")}
+            className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-emerald-800"
+          >
+            <span className="flex items-center gap-3">
+              <FaCog />
+              Administration
+            </span>
+            {openMenu === "admin" ? <FaChevronDown /> : <FaChevronRight />}
+          </button>
+          {openMenu === "admin" && (
+            <div className="ml-8 flex flex-col gap-2 mt-1">
+              <Link to="/admin/settings/branches" className="hover:text-emerald-300">
+                Branches
+              </Link>
+              <Link to="/admin/users" className="hover:text-emerald-300">
+                Users
+              </Link>
             </div>
           )}
         </div>
       </nav>
+
+      {/* Footer */}
+      <div className="p-4 border-t border-emerald-800 text-sm text-center">
+        © 2025 Assets System
+      </div>
     </aside>
   );
 };
