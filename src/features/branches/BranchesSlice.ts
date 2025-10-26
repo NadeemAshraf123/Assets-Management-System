@@ -14,6 +14,8 @@ export interface Branch {
   country?: string;
   status?: boolean;
   groundMaintenance?: boolean;
+  latitude?: number;
+  longitude?: number;
 }
 
 

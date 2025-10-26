@@ -9,8 +9,10 @@
       "address": "Street 1, DHA Phase 1, Lahore, Punjab",
       "city": "London",
       "country": "England/Europe",
-      "status": true,
-      "groundMaintenance": true
+      "status": false,
+      "groundMaintenance": false,
+      "latitude": 33.6844,
+      "longitude": 73.0479
     },
     {
       "id": "2a7d",
@@ -23,6 +25,16 @@
       "country": "Pakistan",
       "status": true,
       "groundMaintenance": true
+    },
+    {
+      "id": "2023",
+      "name": "DHA Phase 100 Branch",
+      "manager": "Sara Khan",
+      "email": "amirshakeeliub@gmail.com",
+      "phone": "03277463564",
+      "address": "Commercial Area Near Khawaj Gareeb Nawaz Hotel Satellite Town Bhawalpure",
+      "city": "Bahawalpur, Punjab, Pakistan",
+      "country": "Pakistan"
     }
   ]
 }

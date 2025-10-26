@@ -2,148 +2,304 @@ import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { addBranch } from '../../../features/branches/BranchesSlice';
 
-
-
-
 interface Props {
     onClose?: () => void;
 }
 
-
-
-
-const AddBranchForm: React.FC = ({ onClose }) => {
-
+const AddBranchForm: React.FC<Props> = ({ onClose }) => {
     const dispatch = useDispatch();
-    const [form, setForm] = useState({
-    name: '',
-    manager: '',
-    email: '',
-    phone: '',
-    address: '',
-  });
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async () => {
-    try {
-    await dispatch(addBranch(form)).unwrap();
-    setForm({name:'',manager:'',email:'',phone:'',address:'',city:'',country:'',})
-    } catch (err) {
-        console.error('Failed to add branch:', err);
-    }
-  };
-
-  return (
-    <div className="max-w-4xl mx-auto bg-[] shadow-md rounded-md p-6 space-y-6">
-
-      <div className="flex items-center bg-[#0F766E33] justify-between border-b pb-4">
-        <div className=''>
-          <h2 className="text-2xl font-bold text-gray-800">Add New Branch</h2>
-          <p className="text-sm text-gray-500">Add New Branch in system</p>
-        </div>
-        <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-xl font-bold">X</button>
-      </div>
-
-      
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-700">Branch Information</h3>
-
-        
-        <input
-          type="text"
-          name="name"
-          placeholder="Branch Name"
-          value={form.name}
-          onChange={handleChange}
-          className="w-full px-4 py-2 border rounded-md text-sm"
-        />
-
-        
-        <div className="grid grid-cols-2 gap-4">
-          <input
-            type="text"
-            name="city"
-            placeholder="City"
-            value={form.city}
-            onChange={handleChange}
-            className="px-4 py-2 border rounded-md text-sm"
-          />
-          <input
-            type="text"
-            name="country"
-            placeholder="Country"
-            value={form.country}
-            onChange={handleChange}
-            className="px-4 py-2 border rounded-md text-sm"
-          />
-        </div>
-
-        
-        <input
-          type="text"
-          name="manager"
-          placeholder="Branch Manager"
-          value={form.manager}
-          onChange={handleChange}
-          className="w-full px-4 py-2 border rounded-md text-sm"
-        />
-
     
-        <div className="grid grid-cols-2 gap-4">
-          <input
-            type="email"
-            name="email"
-            placeholder="Branch Email"
-            value={form.email}
-            onChange={handleChange}
-            className="px-4 py-2 border rounded-md text-sm"
-          />
-          <input
-            type="text"
-            name="phone"
-            placeholder="Branch Phone Number"
-            value={form.phone}
-            onChange={handleChange}
-            className="px-4 py-2 border rounded-md text-sm"
-          />
+    // Form state
+    const [form, setForm] = useState({
+        name: '',
+        manager: '',
+        email: '',
+        phone: '',
+        address: '',
+        city: '',
+        country: '',
+    });
+
+    // Validation state
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // STEP 1: Validation rules
+    const validationRules = {
+        name: { required: true, minLength: 2 },
+        manager: { required: true, minLength: 2 },
+        email: { required: true, pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
+        phone: { required: true, pattern: /^[+]?[\d\s-()]{10,}$/ },
+        address: { required: true, minLength: 5 },
+        city: { required: true, minLength: 2 },
+        country: { required: true, minLength: 2 },
+    };
+
+    // STEP 3: Validation functions
+    const validateField = (name: string, value: string): string => {
+        const rules = validationRules[name as keyof typeof validationRules];
+        
+        if (rules.required && !value.trim()) {
+            return `${name.charAt(0).toUpperCase() + name.slice(1)} is required`;
+        }
+        
+        if (rules.minLength && value.length < rules.minLength) {
+            return `${name.charAt(0).toUpperCase() + name.slice(1)} must be at least ${rules.minLength} characters`;
+        }
+        
+        if (rules.pattern && !rules.pattern.test(value)) {
+            if (name === 'email') return 'Please enter a valid email address';
+            if (name === 'phone') return 'Please enter a valid phone number';
+        }
+        
+        return '';
+    };
+
+    const validateForm = (): boolean => {
+        const newErrors: Record<string, string> = {};
+        
+        Object.keys(validationRules).forEach(field => {
+            const error = validateField(field, form[field as keyof typeof form]);
+            if (error) {
+                newErrors[field] = error;
+            }
+        });
+        
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    // STEP 4: Updated handleChange function
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        
+        setForm({ ...form, [name]: value });
+        
+        // Clear error when user starts typing
+        if (errors[name]) {
+            const error = validateField(name, value);
+            setErrors(prev => ({
+                ...prev,
+                [name]: error
+            }));
+        }
+    };
+
+    // STEP 5: Handle blur validation
+    const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        const error = validateField(name, value);
+        setErrors(prev => ({
+            ...prev,
+            [name]: error
+        }));
+    };
+
+    // STEP 6: Updated handleSubmit function
+    const handleSubmit = async () => {
+        // Validate all fields before submission
+        if (!validateForm()) {
+            return; // Stop submission if validation fails
+        }
+        
+        setIsSubmitting(true);
+        
+        try {
+            await dispatch(addBranch(form)).unwrap();
+            // Reset form on success
+            setForm({
+                name: '',
+                manager: '',
+                email: '',
+                phone: '',
+                address: '',
+                city: '',
+                country: '',
+            });
+            setErrors({});
+            onClose?.(); // Close modal on success
+        } catch (err) {
+            console.error('Failed to add branch:', err);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="max-w-4xl mx-auto bg-white shadow-md rounded-md p-6 space-y-6">
+            {/* Header */}
+            <div className="flex items-center bg-[#0F766E33] justify-between border-b pb-4">
+                <div className=''>
+                    <h2 className="text-2xl font-bold text-gray-800">Add New Branch</h2>
+                    <p className="text-sm text-gray-500">Add New Branch in system</p>
+                </div>
+                <button
+                    onClick={onClose}
+                    className="text-gray-500 hover:text-gray-700 text-xl font-bold"
+                >
+                    X
+                </button>
+            </div>
+
+            {/* Form Fields */}
+            <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-700">Branch Information</h3>
+
+                {/* Branch Name */}
+                <div>
+                    <input
+                        type="text"
+                        name="name"
+                        placeholder="Branch Name"
+                        value={form.name}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        className={`w-full px-4 py-2 border rounded-md text-sm ${
+                            errors.name ? 'border-red-500' : 'border-gray-300'
+                        } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    />
+                    {errors.name && (
+                        <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+                    )}
+                </div>
+
+                {/* City and Country */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <input
+                            type="text"
+                            name="city"
+                            placeholder="City"
+                            value={form.city}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            className={`w-full px-4 py-2 border rounded-md text-sm ${
+                                errors.city ? 'border-red-500' : 'border-gray-300'
+                            } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                        />
+                        {errors.city && (
+                            <p className="text-red-500 text-xs mt-1">{errors.city}</p>
+                        )}
+                    </div>
+                    <div>
+                        <input
+                            type="text"
+                            name="country"
+                            placeholder="Country"
+                            value={form.country}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            className={`w-full px-4 py-2 border rounded-md text-sm ${
+                                errors.country ? 'border-red-500' : 'border-gray-300'
+                            } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                        />
+                        {errors.country && (
+                            <p className="text-red-500 text-xs mt-1">{errors.country}</p>
+                        )}
+                    </div>
+                </div>
+
+                {/* Branch Manager */}
+                <div>
+                    <input
+                        type="text"
+                        name="manager"
+                        placeholder="Branch Manager"
+                        value={form.manager}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        className={`w-full px-4 py-2 border rounded-md text-sm ${
+                            errors.manager ? 'border-red-500' : 'border-gray-300'
+                        } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    />
+                    {errors.manager && (
+                        <p className="text-red-500 text-xs mt-1">{errors.manager}</p>
+                    )}
+                </div>
+
+                {/* Email and Phone */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <input
+                            type="email"
+                            name="email"
+                            placeholder="Branch Email"
+                            value={form.email}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            className={`w-full px-4 py-2 border rounded-md text-sm ${
+                                errors.email ? 'border-red-500' : 'border-gray-300'
+                            } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                        />
+                        {errors.email && (
+                            <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+                        )}
+                    </div>
+                    <div>
+                        <input
+                            type="text"
+                            name="phone"
+                            placeholder="Branch Phone Number"
+                            value={form.phone}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            className={`w-full px-4 py-2 border rounded-md text-sm ${
+                                errors.phone ? 'border-red-500' : 'border-gray-300'
+                            } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                        />
+                        {errors.phone && (
+                            <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+                        )}
+                    </div>
+                </div>
+
+                {/* Address */}
+                <div>
+                    <input
+                        type="text"
+                        name="address"
+                        placeholder="Branch Address"
+                        value={form.address}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        className={`w-full px-4 py-2 border rounded-md text-sm ${
+                            errors.address ? 'border-red-500' : 'border-gray-300'
+                        } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    />
+                    {errors.address && (
+                        <p className="text-red-500 text-xs mt-1">{errors.address}</p>
+                    )}
+                </div>
+            </div>
+
+            {/* Map Placeholder */}
+            <div className="w-full h-64 bg-gray-100 rounded-md flex items-center justify-center text-gray-500 text-sm">
+                [Map Placeholder]
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-4 pt-4">
+                <button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    className={`bg-teal-600 text-white px-6 py-2 rounded-md text-sm hover:bg-teal-700 ${
+                        isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                    }`}
+                >
+                    {isSubmitting ? 'Adding...' : 'Add'}
+                </button>
+                <button 
+                    onClick={onClose}
+                    disabled={isSubmitting}
+                    className={`border border-gray-300 text-gray-700 px-6 py-2 rounded-md text-sm hover:bg-gray-100 ${
+                        isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                    }`}
+                >
+                    Cancel
+                </button>
+            </div>
         </div>
-
-        <input
-          type="text"
-          name="address"
-          placeholder="Branch Address"
-          value={form.address}
-          onChange={handleChange}
-          className="w-full px-4 py-2 border rounded-md text-sm"
-        />
-      </div>
-
-      
-      <div className="w-full h-64 bg-gray-100 rounded-md flex items-center justify-center text-gray-500 text-sm">
-        [Map Placeholder]
-      </div>
-
-
-      <div className="flex justify-end gap-4 pt-4">
-        <button
-          onClick={handleSubmit}
-          className="bg-teal-600 cursor-pointer text-white px-6 py-2 rounded-md text-sm hover:bg-teal-700"
-        >
-          Add
-        </button>
-        <button 
-            onClick={onClose}
-            className="border border-gray-300 cursor-pointer text-gray-700 px-6 py-2 rounded-md text-sm hover:bg-gray-100">
-          Cancel
-        </button>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default AddBranchForm;

@@ -2,6 +2,17 @@ import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { updateBranch } from '../../../features/branches/BranchesSlice';
 import type { Branch } from '../../../features/branches/BranchesSlice';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 interface Props {
   branch: Branch;
@@ -21,29 +32,113 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
     address: branch.address,
     status: branch.status ?? true,
     groundMaintenance: branch.groundMaintenance ?? true,
+    latitude: branch.latitude ?? 33.6844,
+    longitude: branch.longitude ?? 73.0479,
   });
+
+  
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  
+  const validationRules = {
+    name: { required: true, minLength: 2 },
+    manager: { required: true, minLength: 2 },
+    email: { required: true, pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
+    phone: { required: true, pattern: /^[+]?[\d\s-()]{10,}$/ },
+    address: { required: true, minLength: 5 },
+    city: { required: true, minLength: 2 },
+    country: { required: true, minLength: 2 },
+  };
+
+  
+  const validateField = (name: string, value: string): string => {
+    const rules = validationRules[name as keyof typeof validationRules];
+    
+    if (rules.required && !value.trim()) {
+      return `${name.charAt(0).toUpperCase() + name.slice(1)} is required`;
+    }
+    
+    if (rules.minLength && value.length < rules.minLength) {
+      return `${name.charAt(0).toUpperCase() + name.slice(1)} must be at least ${rules.minLength} characters`;
+    }
+    
+    if (rules.pattern && !rules.pattern.test(value)) {
+      if (name === 'email') return 'Please enter a valid email address';
+      if (name === 'phone') return 'Please enter a valid phone number';
+    }
+    
+    return '';
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    
+    Object.keys(validationRules).forEach(field => {
+      const error = validateField(field, form[field as keyof typeof form]);
+      if (error) {
+        newErrors[field] = error;
+      }
+    });
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    
     setForm((prev) => ({ ...prev, [name]: value }));
+    
+    
+    if (errors[name]) {
+      const error = validateField(name, value);
+      setErrors(prev => ({
+        ...prev,
+        [name]: error
+      }));
+    }
   };
 
-  const handleToggle = (name: 'status' | 'groundMaintenance') => {
-    setForm((prev) => ({ ...prev, [name]: !prev[name] }));
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const error = validateField(name, value);
+    setErrors(prev => ({
+      ...prev,
+      [name]: error
+    }));
+  };
+
+  
+  const toggleStatus = () => {
+    setForm(prev => ({ ...prev, status: !prev.status }));
+  };
+
+  const toggleGroundMaintenance = () => {
+    setForm(prev => ({ ...prev, groundMaintenance: !prev.groundMaintenance }));
   };
 
   const handleSubmit = async () => {
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
     try {
       await dispatch(updateBranch({ id: branch.id, data: form })).unwrap();
       onClose();
     } catch (err) {
       console.error('Failed to update branch:', err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto bg-white shadow-md rounded-md p-6 space-y-6">
-      {/* Header */}
+    <div className="max-w-6xl mx-auto bg-white shadow-md rounded-md p-6 space-y-6">
+      
       <div className="flex items-center justify-between border-b pb-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">Edit Branch</h2>
@@ -57,114 +152,228 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
         </button>
       </div>
 
-      {/* Form Section */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-700">Branch Information</h3>
+      
+      <div className="grid grid-cols-1  lg:grid-cols-1 gap-6">
+        
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-700">Branch Information</h3>
 
-        <input
-          type="text"
-          name="name"
-          placeholder="Branch Name"
-          value={form.name}
-          onChange={handleChange}
-          className="w-full px-4 py-2 border rounded-md text-sm"
-        />
+        
+          <div>
+            <input
+              type="text"
+              name="name"
+              placeholder="Branch Name"
+              value={form.name}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              className={`w-full px-4 py-2 border rounded-md text-sm ${
+                errors.name ? 'border-red-500' : 'border-gray-300'
+              } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            />
+            {errors.name && (
+              <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+            )}
+          </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <input
-            type="text"
-            name="city"
-            placeholder="City"
-            value={form.city}
-            onChange={handleChange}
-            className="px-4 py-2 border rounded-md text-sm"
-          />
-          <input
-            type="text"
-            name="country"
-            placeholder="Country"
-            value={form.country}
-            onChange={handleChange}
-            className="px-4 py-2 border rounded-md text-sm"
-          />
+        
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <input
+                type="text"
+                name="city"
+                placeholder="City"
+                value={form.city}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                className={`w-full px-4 py-2 border rounded-md text-sm ${
+                  errors.city ? 'border-red-500' : 'border-gray-300'
+                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              />
+              {errors.city && (
+                <p className="text-red-500 text-xs mt-1">{errors.city}</p>
+              )}
+            </div>
+            <div>
+              <input
+                type="text"
+                name="country"
+                placeholder="Country"
+                value={form.country}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                className={`w-full px-4 py-2 border rounded-md text-sm ${
+                  errors.country ? 'border-red-500' : 'border-gray-300'
+                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              />
+              {errors.country && (
+                <p className="text-red-500 text-xs mt-1">{errors.country}</p>
+              )}
+            </div>
+          </div>
+
+    
+          <div>
+            <input
+              type="text"
+              name="manager"
+              placeholder="Branch Manager"
+              value={form.manager}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              className={`w-full px-4 py-2 border rounded-md text-sm ${
+                errors.manager ? 'border-red-500' : 'border-gray-300'
+              } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            />
+            {errors.manager && (
+              <p className="text-red-500 text-xs mt-1">{errors.manager}</p>
+            )}
+          </div>
+
+        
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <input
+                type="email"
+                name="email"
+                placeholder="Branch Email"
+                value={form.email}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                className={`w-full px-4 py-2 border rounded-md text-sm ${
+                  errors.email ? 'border-red-500' : 'border-gray-300'
+                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              />
+              {errors.email && (
+                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+              )}
+            </div>
+            <div>
+              <input
+                type="text"
+                name="phone"
+                placeholder="Branch Phone Number"
+                value={form.phone}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                className={`w-full px-4 py-2 border rounded-md text-sm ${
+                  errors.phone ? 'border-red-500' : 'border-gray-300'
+                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              />
+              {errors.phone && (
+                <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+              )}
+            </div>
+          </div>
+
+        
+          <div>
+            <input
+              type="text"
+              name="address"
+              placeholder="Branch Address"
+              value={form.address}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              className={`w-full px-4 py-2 border rounded-md text-sm ${
+                errors.address ? 'border-red-500' : 'border-gray-300'
+              } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            />
+            {errors.address && (
+              <p className="text-red-500 text-xs mt-1">{errors.address}</p>
+            )}
+          </div>
+
+        
+          <div className="flex gap-6 pt-4">
+        
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-gray-700">Status</span>
+              <button
+                type="button"
+                onClick={toggleStatus}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                  form.status ? 'bg-green-500' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    form.status ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+              <span className={`text-sm font-medium ${
+                form.status ? 'text-green-600' : 'text-gray-600'
+              }`}>
+                {form.status ? 'Active' : 'Inactive'}
+              </span>
+            </div>
+
+        
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-gray-700">Ground Maintenance</span>
+              <button
+                type="button"
+                onClick={toggleGroundMaintenance}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                  form.groundMaintenance ? 'bg-green-500' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    form.groundMaintenance ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+              <span className={`text-sm font-medium ${
+                form.groundMaintenance ? 'text-green-600' : 'text-gray-600'
+              }`}>
+                {form.groundMaintenance ? 'Yes' : 'No'}
+              </span>
+            </div>
+          </div>
         </div>
 
-        <input
-          type="text"
-          name="manager"
-          placeholder="Branch Manager"
-          value={form.manager}
-          onChange={handleChange}
-          className="w-full px-4 py-2 border rounded-md text-sm"
-        />
-
-        <div className="grid grid-cols-2 gap-4">
-          <input
-            type="email"
-            name="email"
-            placeholder="Branch Email"
-            value={form.email}
-            onChange={handleChange}
-            className="px-4 py-2 border rounded-md text-sm"
-          />
-          <input
-            type="text"
-            name="phone"
-            placeholder="Branch Phone Number"
-            value={form.phone}
-            onChange={handleChange}
-            className="px-4 py-2 border rounded-md text-sm"
-          />
+    
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-700">Location</h3>
+          <div className="w-full h-80 rounded-md overflow-hidden border border-gray-300">
+            <MapContainer
+              center={[form.latitude, form.longitude]}
+              zoom={13}
+              style={{ height: '100%', width: '100%' }}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <Marker position={[form.latitude, form.longitude]}>
+                <Popup>
+                  {form.name} <br /> {form.address}
+                </Popup>
+              </Marker>
+            </MapContainer>
+          </div>
         </div>
-
-        <input
-          type="text"
-          name="address"
-          placeholder="Branch Address"
-          value={form.address}
-          onChange={handleChange}
-          className="w-full px-4 py-2 border rounded-md text-sm"
-        />
       </div>
 
-      {/* Map Placeholder */}
-      <div className="w-full h-64 bg-gray-100 rounded-md flex items-center justify-center text-gray-500 text-sm">
-        [Map Placeholder]
-      </div>
-
-      {/* Toggles */}
-      <div className="flex gap-6 pt-4">
-        <label className="flex items-center gap-2">
-          <span>Status</span>
-          <input
-            type="checkbox"
-            checked={form.status}
-            onChange={() => handleToggle('status')}
-            className="toggle toggle-success"
-          />
-        </label>
-        <label className="flex items-center gap-2">
-          <span>Ground Maintenance</span>
-          <input
-            type="checkbox"
-            checked={form.groundMaintenance}
-            onChange={() => handleToggle('groundMaintenance')}
-            className="toggle toggle-success"
-          />
-        </label>
-      </div>
-
-      {/* Buttons */}
-      <div className="flex justify-end gap-4 pt-4">
+    
+      <div className="flex justify-end gap-4 pt-4 border-t">
         <button
           onClick={handleSubmit}
-          className="bg-teal-600 text-white px-6 py-2 rounded-md text-sm hover:bg-teal-700"
+          disabled={isSubmitting}
+          className={`bg-teal-600 text-white px-6 py-2 rounded-md text-sm hover:bg-teal-700 ${
+            isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+          }`}
         >
-          Edit
+          {isSubmitting ? 'Updating...' : 'Edit'}
         </button>
         <button
           onClick={onClose}
-          className="border border-gray-300 text-gray-700 px-6 py-2 rounded-md text-sm hover:bg-gray-100"
+          disabled={isSubmitting}
+          className={`border border-gray-300 text-gray-700 px-6 py-2 rounded-md text-sm hover:bg-gray-100 ${
+            isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+          }`}
         >
           Cancel
         </button>
