@@ -5,7 +5,7 @@ import './App.css'
 import Sidebar from './components/layout/Sidebarr';
 import Header from './components/layout/Header';
 import BranchesPage from './components/pages /branches/BranchesPage';
-import AddBranchForm from './components/pages /branches/AddBranchForm';
+import BuildingsPage from './components/pages /buildings/BuildingsPage';
 
 function App() {
 
@@ -21,6 +21,8 @@ function App() {
     <div className='flex-1 overflow-auto bg-[#E1E7EF]'>
     <Routes>
       <Route path='/' element={ <BranchesPage /> } />
+      <Route path='/buildings' element={ <BuildingsPage /> } />
+
 
     </Routes>
     </div>

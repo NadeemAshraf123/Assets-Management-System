@@ -137,7 +137,7 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto bg-white shadow-md rounded-md p-6 space-y-6">
+    <div className="max-w-3xl mx-auto bg-white rounded-md p-6 space-y-6">
       
       <div className="flex items-center justify-between border-b pb-4">
         <div>
@@ -285,7 +285,34 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
           </div>
 
         
-          <div className="flex gap-6 pt-4">
+         
+        </div>
+
+    
+        <div className="">
+          <h3 className="text-lg font-semibold text-gray-700">Location</h3>
+          <div className="w-full h-50 rounded-md overflow-hidden border border-gray-300">
+            <MapContainer
+              center={[form.latitude, form.longitude]}
+              zoom={13}
+              style={{ height: '100%', width: '100%' }}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <Marker position={[form.latitude, form.longitude]}>
+                <Popup>
+                  {form.name} <br /> {form.address}
+                </Popup>
+              </Marker>
+            </MapContainer>
+          </div>
+        </div>
+
+
+
+         <div className="flex flex-col gap-6 pt-4">
         
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-gray-700">Status</span>
@@ -332,29 +359,7 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
               </span>
             </div>
           </div>
-        </div>
 
-    
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-700">Location</h3>
-          <div className="w-full h-80 rounded-md overflow-hidden border border-gray-300">
-            <MapContainer
-              center={[form.latitude, form.longitude]}
-              zoom={13}
-              style={{ height: '100%', width: '100%' }}
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <Marker position={[form.latitude, form.longitude]}>
-                <Popup>
-                  {form.name} <br /> {form.address}
-                </Popup>
-              </Marker>
-            </MapContainer>
-          </div>
-        </div>
       </div>
 
     
@@ -362,7 +367,7 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
         <button
           onClick={handleSubmit}
           disabled={isSubmitting}
-          className={`bg-teal-600 text-white px-6 py-2 rounded-md text-sm hover:bg-teal-700 ${
+          className={`bg-[#005C5C] text-white px-6 py-2 rounded-md text-sm hover:bg-teal-700 ${
             isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
           }`}
         >

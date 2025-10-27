@@ -1,37 +1,45 @@
 {
+  "buildings": [
+    {
+      "id": "695c",
+      "name": "Library Tower",
+      "branchId": 2023,
+      "branchName": "DHA Phase 100 Branch",
+      "type": "Resturent Institute Federaal science lahore",
+      "floors": 22,
+      "address": "3 St Gallery (1 New Library Market, London, Pueblo, E480) ",
+      "latitude": 31.582045,
+      "longitude": 74.329376
+    },
+    {
+      "id": "1bb8",
+      "name": "Library Tower Two",
+      "branchId": null,
+      "branchName": "DHA Phase 200 Branch",
+      "type": "Resturent Institute Federaal science lahore",
+      "floors": 44,
+      "address": "3 St Gallery (1 New Library Market, London, Pueblo, E480) ",
+      "latitude": 31.582045,
+      "longitude": 74.329376
+    }
+  ],
   "branches": [
-    {
-      "id": "d7a3",
-      "name": "DHA Phase 100 Branch",
-      "manager": "Sara Khan",
-      "email": "dhabranchmanager@company.com",
-      "phone": "+92 300 3333333",
-      "address": "Street 1, DHA Phase 1, Lahore, Punjab",
-      "city": "London",
-      "country": "England/Europe",
-      "status": false,
-      "groundMaintenance": false,
-      "latitude": 33.6844,
-      "longitude": 73.0479
-    },
-    {
-      "id": "2a7d",
-      "name": "Nadeem Ashraf",
-      "manager": "Sara Khan ",
-      "email": "nadeemashraf0022@gmail.com",
-      "phone": "03277463564",
-      "address": "Commercial Area Near Khawaj Gareeb Nawaz Hotel Satellite Town Bhawalpure",
-      "city": "Bahawalpur, Punjab, Pakistan",
-      "country": "Pakistan",
-      "status": true,
-      "groundMaintenance": true
-    },
     {
       "id": "2023",
       "name": "DHA Phase 100 Branch",
       "manager": "Sara Khan",
       "email": "amirshakeeliub@gmail.com",
       "phone": "03277463564",
+      "address": "Commercial Area Near Khawaj Gareeb Nawaz Hotel Satellite Town Bhawalpure",
+      "city": "Bahawalpur, Punjab, Pakistan",
+      "country": "Pakistan"
+    },
+    {
+      "id": "d098",
+      "name": "DHA Phase 200 Branch",
+      "manager": "Jk Khan",
+      "email": "amirshakeeliub@gmail.com",
+      "phone": "+92-746-35645",
       "address": "Commercial Area Near Khawaj Gareeb Nawaz Hotel Satellite Town Bhawalpure",
       "city": "Bahawalpur, Punjab, Pakistan",
       "country": "Pakistan"
