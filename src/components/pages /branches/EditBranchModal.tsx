@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { updateBranch } from "../../../features/branches/BranchesSlice";
 import type { Branch } from "../../../features/branches/BranchesSlice";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { useOutSideClick } from "../../../hooks/useOutSideClick";
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -20,6 +21,53 @@ interface Props {
   branch: Branch;
   onClose: () => void;
 }
+
+// ✅ Subcomponent to handle map clicks and geocoding
+const LocationMarker = ({
+  setForm,
+}: {
+  setForm: React.Dispatch<
+    React.SetStateAction<{
+      name: string;
+      city: string;
+      country: string;
+      manager: string;
+      email: string;
+      phone: string;
+      address: string;
+      status: boolean;
+      groundMaintenance: boolean;
+      latitude: number;
+      longitude: number;
+    }>
+  >;
+}) => {
+  useMapEvents({
+    async click(e) {
+      const { lat, lng } = e.latlng;
+
+      // 🌍 Reverse Geocoding using Nominatim API
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+        );
+        const data = await response.json();
+        const readableAddress = data.display_name || "Unknown location";
+
+        // 🧭 Update form with new location + address
+        setForm((prev) => ({
+          ...prev,
+          latitude: lat,
+          longitude: lng,
+          address: readableAddress, // update Branch Address field
+        }));
+      } catch (error) {
+        console.error("Error fetching address:", error);
+      }
+    },
+  });
+  return null;
+};
 
 const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
   const dispatch = useDispatch();
@@ -40,6 +88,8 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+  useOutSideClick(modalRef, () => onClose?.());
 
   const validationRules = {
     name: { required: true, minLength: 2 },
@@ -53,60 +103,42 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
 
   const validateField = (name: string, value: string): string => {
     const rules = validationRules[name as keyof typeof validationRules];
-
-    if (rules.required && !value.trim()) {
+    if (rules.required && !value.trim())
       return `${name.charAt(0).toUpperCase() + name.slice(1)} is required`;
-    }
-
-    if (rules.minLength && value.length < rules.minLength) {
-      return `${
-        name.charAt(0).toUpperCase() + name.slice(1)
-      } must be at least ${rules.minLength} characters`;
-    }
-
+    if (rules.minLength && value.length < rules.minLength)
+      return `${name.charAt(0).toUpperCase() + name.slice(1)} must be at least ${
+        rules.minLength
+      } characters`;
     if (rules.pattern && !rules.pattern.test(value)) {
       if (name === "email") return "Please enter a valid email address";
       if (name === "phone") return "Please enter a valid phone number";
     }
-
     return "";
   };
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
-
     Object.keys(validationRules).forEach((field) => {
       const error = validateField(field, form[field as keyof typeof form]);
-      if (error) {
-        newErrors[field] = error;
-      }
+      if (error) newErrors[field] = error;
     });
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-
     setForm((prev) => ({ ...prev, [name]: value }));
-
     if (errors[name]) {
       const error = validateField(name, value);
-      setErrors((prev) => ({
-        ...prev,
-        [name]: error,
-      }));
+      setErrors((prev) => ({ ...prev, [name]: error }));
     }
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     const error = validateField(name, value);
-    setErrors((prev) => ({
-      ...prev,
-      [name]: error,
-    }));
+    setErrors((prev) => ({ ...prev, [name]: error }));
   };
 
   const toggleStatus = () => {
@@ -114,19 +146,12 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
   };
 
   const toggleGroundMaintenance = () => {
-    setForm((prev) => ({
-      ...prev,
-      groundMaintenance: !prev.groundMaintenance,
-    }));
+    setForm((prev) => ({ ...prev, groundMaintenance: !prev.groundMaintenance }));
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
+    if (!validateForm()) return;
     setIsSubmitting(true);
-
     try {
       await dispatch(updateBranch({ id: branch.id, data: form })).unwrap();
       onClose();
@@ -138,7 +163,7 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto bg-white rounded-2xl space-y-6">
+    <div ref={modalRef} className="max-w-3xl mx-auto bg-white rounded-2xl space-y-6">
       <div className="flex items-center text-black bg-[#D5E7E0] justify-between p-6">
         <div>
           <h2 className="text-2xl font-bold">Edit Branch</h2>
@@ -152,15 +177,15 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1  lg:grid-cols-1 p-6 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-1 p-6 gap-6">
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-700">
             Branch Information
           </h3>
 
+          {/* Name */}
           <div>
             <label className="block text-xs">Branch Name </label>
-
             <input
               type="text"
               name="name"
@@ -170,13 +195,12 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
               onBlur={handleBlur}
               className={`w-full px-4 py-2 border rounded-md text-sm ${
                 errors.name ? "border-red-500" : "border-gray-300"
-              } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              }`}
             />
-            {errors.name && (
-              <p className="text-red-500 text-xs mt-1">{errors.name}</p>
-            )}
+            {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
           </div>
 
+          {/* City + Country */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs">City </label>
@@ -189,11 +213,9 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
                 onBlur={handleBlur}
                 className={`w-full px-4 py-2 border rounded-md text-sm ${
                   errors.city ? "border-red-500" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                }`}
               />
-              {errors.city && (
-                <p className="text-red-500 text-xs mt-1">{errors.city}</p>
-              )}
+              {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
             </div>
             <div>
               <label className="block text-xs">Country </label>
@@ -206,7 +228,7 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
                 onBlur={handleBlur}
                 className={`w-full px-4 py-2 border rounded-md text-sm ${
                   errors.country ? "border-red-500" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                }`}
               />
               {errors.country && (
                 <p className="text-red-500 text-xs mt-1">{errors.country}</p>
@@ -214,6 +236,7 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
             </div>
           </div>
 
+          {/* Manager */}
           <div>
             <label className="block text-xs">Branch Manager </label>
             <input
@@ -225,13 +248,14 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
               onBlur={handleBlur}
               className={`w-full px-4 py-2 border rounded-md text-sm ${
                 errors.manager ? "border-red-500" : "border-gray-300"
-              } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              }`}
             />
             {errors.manager && (
               <p className="text-red-500 text-xs mt-1">{errors.manager}</p>
             )}
           </div>
 
+          {/* Email + Phone */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs">Branch Email </label>
@@ -244,7 +268,7 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
                 onBlur={handleBlur}
                 className={`w-full px-4 py-2 border rounded-md text-sm ${
                   errors.email ? "border-red-500" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                }`}
               />
               {errors.email && (
                 <p className="text-red-500 text-xs mt-1">{errors.email}</p>
@@ -252,7 +276,6 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
             </div>
             <div>
               <label className="block text-xs">Branch Phone Number </label>
-
               <input
                 type="text"
                 name="phone"
@@ -262,7 +285,7 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
                 onBlur={handleBlur}
                 className={`w-full px-4 py-2 border rounded-md text-sm ${
                   errors.phone ? "border-red-500" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                }`}
               />
               {errors.phone && (
                 <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
@@ -270,9 +293,9 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
             </div>
           </div>
 
+          {/* Address */}
           <div>
-            <label className="block text-xs"> Branch Address </label>
-
+            <label className="block text-xs">Branch Address </label>
             <input
               type="text"
               name="address"
@@ -282,7 +305,7 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
               onBlur={handleBlur}
               className={`w-full px-4 py-2 border rounded-md text-sm ${
                 errors.address ? "border-red-500" : "border-gray-300"
-              } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              }`}
             />
             {errors.address && (
               <p className="text-red-500 text-xs mt-1">{errors.address}</p>
@@ -290,16 +313,17 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
           </div>
         </div>
 
-        <div className="">
-          <h3 className="text-lg font-semibold text-gray-700">Location</h3>
-          <div className="w-full h-40 rounded-md overflow-hidden border border-gray-300">
+        {/* 🌍 Map Section */}
+        <div>
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">Location</h3>
+          <div className="w-full h-64 rounded-md overflow-hidden border border-gray-300">
             <MapContainer
               center={[form.latitude, form.longitude]}
               zoom={13}
               style={{ height: "100%", width: "100%" }}
             >
               <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
               <Marker position={[form.latitude, form.longitude]}>
@@ -307,17 +331,21 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
                   {form.name} <br /> {form.address}
                 </Popup>
               </Marker>
+
+              {/* 👇 Handles user clicks and reverse geocode */}
+              <LocationMarker setForm={setForm} />
             </MapContainer>
           </div>
         </div>
 
+        {/* Status & Maintenance Toggles */}
         <div className="flex flex-col gap-6 pt-4">
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-gray-700">Status</span>
             <button
               type="button"
               onClick={toggleStatus}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                 form.status ? "bg-[#0F766E]" : "bg-gray-300"
               }`}
             >
@@ -336,15 +364,14 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
             </span>
           </div>
 
-          <div className="flex  gap-3">
-            
+          <div className="flex gap-3">
             <span className="text-sm font-medium text-gray-700">
               Ground Maintenance
             </span>
             <button
               type="button"
               onClick={toggleGroundMaintenance}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                 form.groundMaintenance ? "bg-[#0F766E]" : "bg-gray-300"
               }`}
             >
@@ -365,7 +392,8 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
         </div>
       </div>
 
-      <div className="flex justify-end gap-4 ">
+      {/* Footer Buttons */}
+      <div className="flex justify-end gap-4 pb-6 pr-6">
         <button
           onClick={handleSubmit}
           disabled={isSubmitting}
@@ -373,7 +401,7 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
             isSubmitting ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
           }`}
         >
-          {isSubmitting ? "Updating..." : "Edit"}
+          {isSubmitting ? "Updating..." : "Save Changes"}
         </button>
         <button
           onClick={onClose}

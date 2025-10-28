@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { FaSearch, FaChevronDown } from "react-icons/fa";
+import { useOutSideClick } from "../../../../hooks/useOutSideClick";
 
 interface SearchBarProps {
   placeholder?: string;
@@ -28,8 +29,11 @@ const SearchBar: React.FC<SearchBarProps> = ({
         item.toLowerCase().includes(value.toLowerCase())
       );
 
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  useOutSideClick(wrapperRef, () => setShowSuggestions(false));
+
   return (
-    <div className={`relative ${className}`}>
+    <div ref={wrapperRef} className={`relative ${className}`}>
       <FaSearch className="absolute left-3 top-2.5 text-gray-400 text-sm" />
 
       <input
@@ -42,13 +46,13 @@ const SearchBar: React.FC<SearchBarProps> = ({
           setShowSuggestions(true);
         }}
         placeholder={placeholder}
-        className="w-full pl-10 py-2 text-sm rounded-lg bg-gray-100 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full pl-10 cursor-pointer py-2 text-sm rounded-lg bg-gray-100 border border-gray-300 focus:outline-none"
       />
 
       {showDropdownIcon && (
         <button
           type="button"
-          className="absolute right-2 top-2.5 text-gray-400 text-sm focus:outline-none"
+          className="absolute cursor-pointer right-2 top-2.5 text-gray-400 text-sm focus:outline-none"
           onClick={() => setShowSuggestions((prev) => !prev)}
         >
           <FaChevronDown />
@@ -56,7 +60,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
       )}
 
       {showSuggestions && filteredSuggestions.length > 0 && (
-        <ul className="absolute z-10 bg-white border rounded shadow mt-1 w-full max-h-60 overflow-auto text-sm">
+        <ul className="absolute z-10 bg-[#FFFFFF] rounded shadow mt-1 w-full max-h-60 overflow-auto text-sm">
           {filteredSuggestions.map((item, index) => (
             <li
               key={index}

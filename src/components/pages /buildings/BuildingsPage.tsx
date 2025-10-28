@@ -6,6 +6,8 @@ import {
   updateBuilding,
   addBuilding,
   clearError,
+  selectBuildingNames,
+  selectBuildingTypes,
 } from "../../../features/building/BuildingSlice";
 import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 import { Settings, Pencil } from "lucide-react";
@@ -51,6 +53,8 @@ const BuildingsPage = () => {
     null
   );
   const [isDeleting, setIsDeleting] = useState(false);
+  const buildingNames = useSelector(selectBuildingNames);
+  const buildingTypes = useSelector(selectBuildingTypes);
 
   useEffect(() => {
     dispatch(fetchBuildings() as any);
@@ -206,100 +210,113 @@ const BuildingsPage = () => {
 
       <div className="pl-7 pr-14">
         <div className="flex gap-4 p-3 rounded-sm bg-white">
-          <SearchBar  
+          <SearchBar
             placeholder="Search Building Name"
             value={searchName}
             onChange={setSearchName}
             showDropdownIcon={true}
+            suggestions={buildingNames}
           />
-         
+
           <SearchBar
-              placeholder="Search Building Type"
-              value={searchType}
-              onChange={setSearchType}
-              showDropdownIcon={true}
-           />
+            placeholder="Search Building Type"
+            value={searchType}
+            onChange={setSearchType}
+            showDropdownIcon={true}
+            suggestions={buildingTypes}
+          />
         </div>
       </div>
 
       <div className="pl-7 pr-14">
-      <div className="overflow-x-auto  bg-white rounded-2xl shadow">
-        <table className="w-full border border-gray-300 text-sm">
-          <thead className="bg-[#FFFFFF] text-left">
-            <tr>
-              <th className="px-4 py-3 truncate max-w-[180px] border-r border-[#E0E5F2] font-semibold">
-                Building Name
-              </th>
-              <th className="px-4 py-3 border-r border-[#E0E5F2] font-semibold">
-                Branch
-              </th>
-              <th className="px-4 py-3 border-r truncate max-w-[180px] border-[#E0E5F2] font-semibold">
-                Building Type
-              </th>
-              <th className="px-4 py-3 border-r border-[#E0E5F2] font-semibold">
-                Floors
-              </th>
-              <th className="px-4 py-3 border-r border-[#E0E5F2] font-semibold">
-                Address
-              </th>
-              <th className="px-4 py-3 border-r border-[#E0E5F2] font-semibold">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
+        <div className="overflow-x-auto  bg-white rounded-2xl shadow">
+          <table className="w-full border border-gray-300 text-sm">
+            <thead className="bg-[#FFFFFF] text-left">
               <tr>
-                <td colSpan={6} className="text-center py-4">
-                  <div className="flex justify-center items-center">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                    <span className="ml-2">Loading buildings...</span>
-                  </div>
-                </td>
+                <th className="px-4 py-3 truncate max-w-[180px] border-r border-[#E0E5F2] font-semibold">
+                  Building Name
+                </th>
+                <th className="px-4 py-3 border-r border-[#E0E5F2] font-semibold">
+                  Branch
+                </th>
+                <th className="px-4 py-3 border-r truncate max-w-[180px] border-[#E0E5F2] font-semibold">
+                  Building Type
+                </th>
+                <th className="px-4 py-3 border-r border-[#E0E5F2] font-semibold">
+                  Floors
+                </th>
+                <th className="px-4 py-3 border-r border-[#E0E5F2] font-semibold">
+                  Address
+                </th>
+                <th className="px-4 py-3 border-r border-[#E0E5F2] font-semibold">
+                  Actions
+                </th>
               </tr>
-            ) : filteredBuildings.length > 0 ? (
-              filteredBuildings.map((building: Building) => (
-                <tr
-                  key={building.id}
-                  className="border-t border-[#E0E5F2] hover:bg-gray-50"
-                >
-                  <td className="px-4 py-3 truncate max-w-[180px]">{building.name}</td>
-                  <td className="px-4 py-3 truncate max-w-[180px]">
-                    {building.branchName || `Branch ${building.branchId}`}
-                  </td>
-                  <td className="px-4 py-3 truncate max-w-[150px]">{building.type}</td>
-                  <td className="px-4 py-3">{building.floors}</td>
-                  <td className="px-4 py-3 truncate max-w-[180px]">{building.address}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <button
-                        className="bg-[#BBF7D0] text-blue-600 rounded-md p-1 hover:bg-[#A7F3D0] transition-colors"                        onClick={() => handleEditClick(building)}
-                        title="Edit Building"
-                      >
-                      <Pencil size={13} className="text-gray-600 cursor-pointer" />
-                      </button>
-                      <button
-                        className="bg-[#FECACA] text-red-600 rounded-md p-1 hover:bg-[#FCA5A5] transition-colors"                        onClick={() => handleDelete(building)}
-                        title="Delete Building"
-                      >
-                        <FaTrash size={13}  />
-                      </button>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-4">
+                    <div className="flex justify-center items-center">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      <span className="ml-2">Loading buildings...</span>
                     </div>
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={6} className="text-center py-4 text-gray-500">
-                  {buildings.length === 0
-                    ? "No buildings available. Add your first building!"
-                    : "No buildings match your search criteria."}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              ) : filteredBuildings.length > 0 ? (
+                filteredBuildings.map((building: Building) => (
+                  <tr
+                    key={building.id}
+                    className="border-t border-[#E0E5F2] hover:bg-gray-50"
+                  >
+                    <td className="px-4 py-3 truncate max-w-[180px]">
+                      {building.name}
+                    </td>
+                    <td className="px-4 py-3 truncate max-w-[180px]">
+                      {building.branchName || `Branch ${building.branchId}`}
+                    </td>
+                    <td className="px-4 py-3 truncate max-w-[150px]">
+                      {building.type}
+                    </td>
+                    <td className="px-4 py-3">{building.floors}</td>
+                    <td className="px-4 py-3 truncate max-w-[180px]">
+                      {building.address}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-2">
+                        <button
+                          className="bg-[#BBF7D0] text-blue-600 rounded-md p-1 hover:bg-[#A7F3D0] transition-colors"
+                          onClick={() => handleEditClick(building)}
+                          title="Edit Building"
+                        >
+                          <Pencil
+                            size={13}
+                            className="text-gray-600 cursor-pointer"
+                          />
+                        </button>
+                        <button
+                          className="bg-[#FECACA] text-red-600 rounded-md p-1 hover:bg-[#FCA5A5] transition-colors"
+                          onClick={() => handleDelete(building)}
+                          title="Delete Building"
+                        >
+                          <FaTrash size={13} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="text-center py-4 text-gray-500">
+                    {buildings.length === 0
+                      ? "No buildings available. Add your first building!"
+                      : "No buildings match your search criteria."}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {isModalOpen && modalMode === "add" && (

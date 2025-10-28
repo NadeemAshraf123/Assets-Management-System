@@ -14,13 +14,13 @@
     {
       "id": "546e",
       "name": "Libral Tower National",
-      "branchId": null,
+      "branchId": 0,
       "branchName": "DHA Phase 200 Branch",
       "type": "Resturent Institute Federaal science lahore",
       "floors": 55,
-      "address": "3 St Gallery (1 New Library Market, London, Pueblo, E480) ",
-      "latitude": 31.582045,
-      "longitude": 74.329376
+      "address": "Caleb Road, Dhobi Mandi, Gawalmandi, Lahore, Lahore City Tehsil, Lahore District, Lahore Division, Punjab, 54500, Pakistan",
+      "latitude": 31.570930516413465,
+      "longitude": 74.31735992431642
     },
     {
       "id": "8d6f",
@@ -32,6 +32,17 @@
       "address": "3 St Gallery (1 New Library Market, London, Pueblo, E480) ",
       "latitude": 31.582045,
       "longitude": 74.329376
+    },
+    {
+      "id": "bd81",
+      "name": "Eifle Tower",
+      "branchId": null,
+      "branchName": "DHA Phase 4 Branch",
+      "type": "Resturent Institute Federaal science Karachi",
+      "floors": 2,
+      "address": "Misri Shah, Lahore, Lahore City Tehsil, Lahore District, Lahore Division, Punjab, 54840, Pakistan",
+      "latitude": 31.58328818020989,
+      "longitude": 74.33512687683107
     }
   ],
   "branches": [
@@ -64,6 +75,34 @@
       "address": "Commercial Area Near Khawaj Gareeb Nawaz Hotel Satellite Town Bhawalpure",
       "city": "Bahawalpur, Punjab, Pakistan",
       "country": "Pakistan"
+    },
+    {
+      "id": "c187",
+      "name": "DHA Phase 300 Branch",
+      "manager": "Jhon Khan",
+      "email": "jhon123@gmail.com",
+      "phone": "0327 7463564",
+      "address": "Commercial Area Near Khawaj Gareeb Nawaz Hotel Satellite Town Bhawalpure",
+      "city": "london",
+      "country": "England",
+      "latitude": 31.51958115205496,
+      "longitude": 74.38035964965822,
+      "fullAddress": "Mobilink Flower Market, Sarfaraz Rafiqi Road (Cunnynghame Road), Lahore Cantonment, Lahore Cantonment Tehsil, Lahore District, Lahore Division, Punjab, 54810, Pakistan"
+    },
+    {
+      "id": "1108",
+      "name": "Enigmatix",
+      "manager": "Abdullah Khalid",
+      "email": "amirshakeeliub@gmail.com",
+      "phone": "03277463564",
+      "branchaddress": "Lahori Restaurant, Munir Road, Lahore Cantonment, Lahore Cantonment Tehsil, Lahore District, Lahore Division, Punjab, 54810, Pakistan",
+      "city": "Bahawalpur, Punjab, Pakistan",
+      "country": "Pakistan",
+      "latitude": 31.52265413069918,
+      "longitude": 74.38456535339357,
+      "address": "Lahore Cantonment, Lahore Cantonment Tehsil, Lahore District, Lahore Division, Punjab, 54810, Pakistan",
+      "status": true,
+      "groundMaintenance": true
     }
   ]
 }

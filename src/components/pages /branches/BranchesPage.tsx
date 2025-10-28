@@ -19,6 +19,7 @@ import { Settings } from "lucide-react";
 import logo from "../../../assets/logo.png";
 
 const BranchesPage: React.FC = () => {
+  
   const dispatch = useDispatch();
 const branchNames = useSelector((state: RootState) => state.branches.branchNames || []);
   const { branches, loading, error } = useSelector(

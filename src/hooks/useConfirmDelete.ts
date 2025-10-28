@@ -9,13 +9,14 @@ interface ConfirmDeleteState {
 }
 
 export const useConfirmDelete = () => {
-    const [confirmState, setConfirmState] = useState<COnfirmDeleteState>({
-        isOPen: false,
+    const [confirmState, setConfirmState] = useState<ConfirmDeleteState>({
+        isOpen: false,
         title: "Are you sure you want to delete this item?",
     });
 
 
     const showConfirm = useCallback((
+
         onConfirm: () => void,
         options?: { title?: string; message?: string }
     ) => {
@@ -43,7 +44,7 @@ export const useConfirmDelete = () => {
     return {
         isOpen: confirmState.isOpen,
         title: confirmState.title,
-        mesage: confirmState.message,
+        message: confirmState.message,
         showConfirm,
         hideConfirm,
         handleConfirm, 

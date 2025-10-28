@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect,useRef } from "react";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { X, MapPin } from "lucide-react";
 import L from "leaflet";
+import { useOutSideClick } from "../../../hooks/useOutSideClick";
+import { useReverseGeocode } from "../../../hooks/useReverseGeocode";
 
 const markerIcon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -38,6 +40,12 @@ const EditBuildingForm: React.FC<EditBuildingFormProps> = ({
     groundMaintenance: false,
   });
 
+  const modalRef = useRef<HTMLDivElement>(null);
+  useOutSideClick(modalRef, () => onClose?.());
+  const { getAddressFromCoords, loading } = useReverseGeocode();
+
+
+
   useEffect(() => {
     if (selectedBuilding) {
       setFormData({
@@ -57,17 +65,26 @@ const EditBuildingForm: React.FC<EditBuildingFormProps> = ({
 
   if (!isOpen) return null;
 
-  const handleMapClick = (e: any) => {
+  const handleMapClick = async (e: any) => {
+    const lat = e.latlng.lat;
+    const lng = e.latlng.lng;
+
+    const address = await getAddressFromCoords(lat, lng);
+
     setFormData({
       ...formData,
-      latitude: e.latlng.lat,
-      longitude: e.latlng.lng,
+      latitude: lat,
+      longitude: lng,
+      fullAddress: address,
     });
   };
 
   const MapClickHandler = () => {
-    useMapEvents({
-      click: handleMapClick,
+    const map = useMapEvents({
+      click: async (e) => {
+        await handleMapClick(e);
+        map.setView(e.latlng, map.getZoom());
+      },
     });
     return null;
   };
@@ -78,9 +95,9 @@ const EditBuildingForm: React.FC<EditBuildingFormProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl shadow-lg w-[750px] max-h-screen overflow-y-auto">
-        <div className="flex items-center justify-between bg-[#d5e7e0] px-6 py-4 rounded-t-2xl">
+    <div  className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div ref={modalRef} className="bg-white rounded-2xl shadow-lg w-[750px] max-h-screen overflow-y-auto">
+        <div  className="flex items-center justify-between bg-[#d5e7e0] px-6 py-4 rounded-t-2xl">
           <div>
             <h2 className="text-lg font-semibold">Edit Building</h2>
             <p className="text-sm text-gray-600">Edit Building in system</p>
@@ -192,6 +209,9 @@ const EditBuildingForm: React.FC<EditBuildingFormProps> = ({
               />
               <MapClickHandler />
             </MapContainer>
+            {loading && ( 
+              <p className="text-sm text-emerald-700 mt-2">Fetching address...</p>
+            )}
           </div>
 
           <div>

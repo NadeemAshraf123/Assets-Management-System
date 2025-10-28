@@ -1,4 +1,5 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, createSelector } from '@reduxjs/toolkit';
+import type { RootState } from "../../app/Store";
 import type { PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 
@@ -78,6 +79,16 @@ export const deleteBuilding = createAsyncThunk('buildings/deleteBuilding', async
     throw new Error('Failed to delete building');
   }
 });
+
+export const selectBuildingNames = createSelector(
+  (state: RootState) => state.buildings.buildings,
+  (buildings) => buildings.map((b) => b.name).filter(Boolean)
+);
+
+export const selectBuildingTypes = createSelector(
+  (state: RootState) => state.buildings.buildings,
+  (buildings) => [...new Set(buildings.map((b) => b.type).filter(Boolean))]
+);
 
 const buildingsSlice = createSlice({
   name: 'buildings',
