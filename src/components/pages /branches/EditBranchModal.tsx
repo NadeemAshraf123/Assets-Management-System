@@ -1,17 +1,19 @@
-import { useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { updateBranch } from '../../../features/branches/BranchesSlice';
-import type { Branch } from '../../../features/branches/BranchesSlice';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-
+import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { updateBranch } from "../../../features/branches/BranchesSlice";
+import type { Branch } from "../../../features/branches/BranchesSlice";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconRetinaUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
 interface Props {
@@ -24,8 +26,8 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
 
   const [form, setForm] = useState({
     name: branch.name,
-    city: branch.city ?? '',
-    country: branch.country ?? '',
+    city: branch.city ?? "",
+    country: branch.country ?? "",
     manager: branch.manager,
     email: branch.email,
     phone: branch.phone,
@@ -36,11 +38,9 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
     longitude: branch.longitude ?? 73.0479,
   });
 
-  
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  
   const validationRules = {
     name: { required: true, minLength: 2 },
     manager: { required: true, minLength: 2 },
@@ -51,51 +51,51 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
     country: { required: true, minLength: 2 },
   };
 
-  
   const validateField = (name: string, value: string): string => {
     const rules = validationRules[name as keyof typeof validationRules];
-    
+
     if (rules.required && !value.trim()) {
       return `${name.charAt(0).toUpperCase() + name.slice(1)} is required`;
     }
-    
+
     if (rules.minLength && value.length < rules.minLength) {
-      return `${name.charAt(0).toUpperCase() + name.slice(1)} must be at least ${rules.minLength} characters`;
+      return `${
+        name.charAt(0).toUpperCase() + name.slice(1)
+      } must be at least ${rules.minLength} characters`;
     }
-    
+
     if (rules.pattern && !rules.pattern.test(value)) {
-      if (name === 'email') return 'Please enter a valid email address';
-      if (name === 'phone') return 'Please enter a valid phone number';
+      if (name === "email") return "Please enter a valid email address";
+      if (name === "phone") return "Please enter a valid phone number";
     }
-    
-    return '';
+
+    return "";
   };
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
-    
-    Object.keys(validationRules).forEach(field => {
+
+    Object.keys(validationRules).forEach((field) => {
       const error = validateField(field, form[field as keyof typeof form]);
       if (error) {
         newErrors[field] = error;
       }
     });
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
+
     setForm((prev) => ({ ...prev, [name]: value }));
-    
-    
+
     if (errors[name]) {
       const error = validateField(name, value);
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [name]: error
+        [name]: error,
       }));
     }
   };
@@ -103,46 +103,46 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     const error = validateField(name, value);
-    setErrors(prev => ({
+    setErrors((prev) => ({
       ...prev,
-      [name]: error
+      [name]: error,
     }));
   };
 
-  
   const toggleStatus = () => {
-    setForm(prev => ({ ...prev, status: !prev.status }));
+    setForm((prev) => ({ ...prev, status: !prev.status }));
   };
 
   const toggleGroundMaintenance = () => {
-    setForm(prev => ({ ...prev, groundMaintenance: !prev.groundMaintenance }));
+    setForm((prev) => ({
+      ...prev,
+      groundMaintenance: !prev.groundMaintenance,
+    }));
   };
 
   const handleSubmit = async () => {
-    
     if (!validateForm()) {
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       await dispatch(updateBranch({ id: branch.id, data: form })).unwrap();
       onClose();
     } catch (err) {
-      console.error('Failed to update branch:', err);
+      console.error("Failed to update branch:", err);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="max-w-3xl mx-auto bg-white rounded-md p-6 space-y-6">
-      
-      <div className="flex items-center justify-between border-b pb-4">
+    <div className="max-w-3xl mx-auto bg-white rounded-2xl space-y-6">
+      <div className="flex items-center text-black bg-[#D5E7E0] justify-between p-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Edit Branch</h2>
-          <p className="text-sm text-gray-500">Edit Branch in system</p>
+          <h2 className="text-2xl font-bold">Edit Branch</h2>
+          <p className="text-sm">Edit Branch in system</p>
         </div>
         <button
           onClick={onClose}
@@ -152,14 +152,15 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
         </button>
       </div>
 
-      
-      <div className="grid grid-cols-1  lg:grid-cols-1 gap-6">
-        
+      <div className="grid grid-cols-1  lg:grid-cols-1 p-6 gap-6">
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-700">Branch Information</h3>
+          <h3 className="text-lg font-semibold text-gray-700">
+            Branch Information
+          </h3>
 
-        
           <div>
+            <label className="block text-xs">Branch Name </label>
+
             <input
               type="text"
               name="name"
@@ -168,7 +169,7 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
               onChange={handleChange}
               onBlur={handleBlur}
               className={`w-full px-4 py-2 border rounded-md text-sm ${
-                errors.name ? 'border-red-500' : 'border-gray-300'
+                errors.name ? "border-red-500" : "border-gray-300"
               } focus:outline-none focus:ring-2 focus:ring-blue-500`}
             />
             {errors.name && (
@@ -176,9 +177,9 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
             )}
           </div>
 
-        
           <div className="grid grid-cols-2 gap-4">
             <div>
+              <label className="block text-xs">City </label>
               <input
                 type="text"
                 name="city"
@@ -187,7 +188,7 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
                 onChange={handleChange}
                 onBlur={handleBlur}
                 className={`w-full px-4 py-2 border rounded-md text-sm ${
-                  errors.city ? 'border-red-500' : 'border-gray-300'
+                  errors.city ? "border-red-500" : "border-gray-300"
                 } focus:outline-none focus:ring-2 focus:ring-blue-500`}
               />
               {errors.city && (
@@ -195,6 +196,7 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
               )}
             </div>
             <div>
+              <label className="block text-xs">Country </label>
               <input
                 type="text"
                 name="country"
@@ -203,7 +205,7 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
                 onChange={handleChange}
                 onBlur={handleBlur}
                 className={`w-full px-4 py-2 border rounded-md text-sm ${
-                  errors.country ? 'border-red-500' : 'border-gray-300'
+                  errors.country ? "border-red-500" : "border-gray-300"
                 } focus:outline-none focus:ring-2 focus:ring-blue-500`}
               />
               {errors.country && (
@@ -212,8 +214,8 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
             </div>
           </div>
 
-    
           <div>
+            <label className="block text-xs">Branch Manager </label>
             <input
               type="text"
               name="manager"
@@ -222,7 +224,7 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
               onChange={handleChange}
               onBlur={handleBlur}
               className={`w-full px-4 py-2 border rounded-md text-sm ${
-                errors.manager ? 'border-red-500' : 'border-gray-300'
+                errors.manager ? "border-red-500" : "border-gray-300"
               } focus:outline-none focus:ring-2 focus:ring-blue-500`}
             />
             {errors.manager && (
@@ -230,9 +232,9 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
             )}
           </div>
 
-        
           <div className="grid grid-cols-2 gap-4">
             <div>
+              <label className="block text-xs">Branch Email </label>
               <input
                 type="email"
                 name="email"
@@ -241,7 +243,7 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
                 onChange={handleChange}
                 onBlur={handleBlur}
                 className={`w-full px-4 py-2 border rounded-md text-sm ${
-                  errors.email ? 'border-red-500' : 'border-gray-300'
+                  errors.email ? "border-red-500" : "border-gray-300"
                 } focus:outline-none focus:ring-2 focus:ring-blue-500`}
               />
               {errors.email && (
@@ -249,6 +251,8 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
               )}
             </div>
             <div>
+              <label className="block text-xs">Branch Phone Number </label>
+
               <input
                 type="text"
                 name="phone"
@@ -257,7 +261,7 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
                 onChange={handleChange}
                 onBlur={handleBlur}
                 className={`w-full px-4 py-2 border rounded-md text-sm ${
-                  errors.phone ? 'border-red-500' : 'border-gray-300'
+                  errors.phone ? "border-red-500" : "border-gray-300"
                 } focus:outline-none focus:ring-2 focus:ring-blue-500`}
               />
               {errors.phone && (
@@ -266,8 +270,9 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
             </div>
           </div>
 
-        
           <div>
+            <label className="block text-xs"> Branch Address </label>
+
             <input
               type="text"
               name="address"
@@ -276,26 +281,22 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
               onChange={handleChange}
               onBlur={handleBlur}
               className={`w-full px-4 py-2 border rounded-md text-sm ${
-                errors.address ? 'border-red-500' : 'border-gray-300'
+                errors.address ? "border-red-500" : "border-gray-300"
               } focus:outline-none focus:ring-2 focus:ring-blue-500`}
             />
             {errors.address && (
               <p className="text-red-500 text-xs mt-1">{errors.address}</p>
             )}
           </div>
-
-        
-         
         </div>
 
-    
         <div className="">
           <h3 className="text-lg font-semibold text-gray-700">Location</h3>
-          <div className="w-full h-50 rounded-md overflow-hidden border border-gray-300">
+          <div className="w-full h-40 rounded-md overflow-hidden border border-gray-300">
             <MapContainer
               center={[form.latitude, form.longitude]}
               zoom={13}
-              style={{ height: '100%', width: '100%' }}
+              style={{ height: "100%", width: "100%" }}
             >
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -310,74 +311,75 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
           </div>
         </div>
 
-
-
-         <div className="flex flex-col gap-6 pt-4">
-        
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-gray-700">Status</span>
-              <button
-                type="button"
-                onClick={toggleStatus}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                  form.status ? 'bg-green-500' : 'bg-gray-300'
+        <div className="flex flex-col gap-6 pt-4">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-gray-700">Status</span>
+            <button
+              type="button"
+              onClick={toggleStatus}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                form.status ? "bg-[#0F766E]" : "bg-gray-300"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  form.status ? "translate-x-6" : "translate-x-1"
                 }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    form.status ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-              <span className={`text-sm font-medium ${
-                form.status ? 'text-green-600' : 'text-gray-600'
-              }`}>
-                {form.status ? 'Active' : 'Inactive'}
-              </span>
-            </div>
-
-        
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-gray-700">Ground Maintenance</span>
-              <button
-                type="button"
-                onClick={toggleGroundMaintenance}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                  form.groundMaintenance ? 'bg-green-500' : 'bg-gray-300'
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    form.groundMaintenance ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-              <span className={`text-sm font-medium ${
-                form.groundMaintenance ? 'text-green-600' : 'text-gray-600'
-              }`}>
-                {form.groundMaintenance ? 'Yes' : 'No'}
-              </span>
-            </div>
+              />
+            </button>
+            <span
+              className={`text-sm font-medium ${
+                form.status ? "text-[#0F766E]" : "text-gray-600"
+              }`}
+            >
+              {form.status ? "Active" : "Inactive"}
+            </span>
           </div>
 
+          <div className="flex  gap-3">
+            
+            <span className="text-sm font-medium text-gray-700">
+              Ground Maintenance
+            </span>
+            <button
+              type="button"
+              onClick={toggleGroundMaintenance}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                form.groundMaintenance ? "bg-[#0F766E]" : "bg-gray-300"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  form.groundMaintenance ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+            <span
+              className={`text-sm font-medium ${
+                form.groundMaintenance ? "text-[#0F766E]" : "text-gray-600"
+              }`}
+            >
+              {form.groundMaintenance ? "Yes" : "No"}
+            </span>
+          </div>
+        </div>
       </div>
 
-    
-      <div className="flex justify-end gap-4 pt-4 border-t">
+      <div className="flex justify-end gap-4 ">
         <button
           onClick={handleSubmit}
           disabled={isSubmitting}
           className={`bg-[#005C5C] text-white px-6 py-2 rounded-md text-sm hover:bg-teal-700 ${
-            isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+            isSubmitting ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
           }`}
         >
-          {isSubmitting ? 'Updating...' : 'Edit'}
+          {isSubmitting ? "Updating..." : "Edit"}
         </button>
         <button
           onClick={onClose}
           disabled={isSubmitting}
           className={`border border-gray-300 text-gray-700 px-6 py-2 rounded-md text-sm hover:bg-gray-100 ${
-            isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+            isSubmitting ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
           }`}
         >
           Cancel

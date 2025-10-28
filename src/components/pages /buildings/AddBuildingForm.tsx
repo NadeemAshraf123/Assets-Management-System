@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { FaCog } from "react-icons/fa";
 
-// Default Leaflet marker fix
+
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -49,11 +49,11 @@ const AddBuildingForm: React.FC<AddBuildingFormProps> = ({
     buildingType: "",
     totalFloors: 0,
     fullAddress: "",
-    latitude: 31.582045, // Lahore default
+    latitude: 31.582045, 
     longitude: 74.329376,
   });
 
-  // Component to update map coordinates on click
+  
   const LocationMarker = () => {
     useMapEvents({
       click(e) {
@@ -119,7 +119,7 @@ const AddBuildingForm: React.FC<AddBuildingFormProps> = ({
           Building Information
         </h3>
 
-        {/* Branch Name */}
+  
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-gray-700">Branch Name</label>
           <select
@@ -137,7 +137,7 @@ const AddBuildingForm: React.FC<AddBuildingFormProps> = ({
           </select>
         </div>
 
-        {/* Building Name */}
+        
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-gray-700">Building Name</label>
           <input
@@ -150,7 +150,7 @@ const AddBuildingForm: React.FC<AddBuildingFormProps> = ({
           />
         </div>
 
-        {/* Type + Floors */}
+        
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-gray-700">
@@ -178,7 +178,7 @@ const AddBuildingForm: React.FC<AddBuildingFormProps> = ({
           </div>
         </div>
 
-        {/* Full Address */}
+        
         <div className="flex flex-col gap-1 relative">
           <label className="text-sm font-medium text-gray-700">Full Address</label>
           <input
@@ -192,7 +192,7 @@ const AddBuildingForm: React.FC<AddBuildingFormProps> = ({
           <FaCog className="absolute right-3 top-10 text-gray-500" />
         </div>
 
-        {/* Map */}
+      
         <div className="mt-4 border rounded overflow-hidden">
           <MapContainer
             center={[formData.latitude, formData.longitude]}
@@ -207,7 +207,7 @@ const AddBuildingForm: React.FC<AddBuildingFormProps> = ({
           </MapContainer>
         </div>
 
-        {/* Buttons */}
+      
         <div className="flex justify-end gap-3 pt-4">
           <button
             type="button"

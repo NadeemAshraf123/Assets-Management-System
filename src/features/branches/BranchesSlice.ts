@@ -39,6 +39,12 @@ export const fetchBranches = createAsyncThunk('branches/fetchBranches', async ()
   return response.data as Branch[];
 });
 
+export const fetchBranchNames = createAsyncThunk('branches/fetchBranchNames',
+    async () => {
+      const response = await axios.get(BASE_URL);
+      return response.data.map((branch: any) => branch.name);
+    });
+
 
 export const deleteBranch = createAsyncThunk('branches/deleteBranch', async (id: number) => {
   await axios.delete(`${BASE_URL}/${id}`);
@@ -91,10 +97,20 @@ const branchesSlice = createSlice({
         if (index !== -1) state.branches[index] = action.payload;
       })
 
-      
       .addCase(addBranch.fulfilled, (state, action: PayloadAction<Branch>) => {
         state.branches.push(action.payload);
-      });
+      })
+    .addCase(fetchBranchNames.pending, (state) => {
+      state.loading = true;
+    })
+    .addCase(fetchBranchNames.fulfilled, (state, action) => {
+      state.loading = false;
+      state.branchNames = action.payload;
+    })
+    .addCase(fetchBranchNames.rejected, (state) => {
+      state.loading = false;
+      state.error = 'Failed to fetch branch names';
+    });
   },
 });
 

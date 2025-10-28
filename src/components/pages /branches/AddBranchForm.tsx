@@ -9,7 +9,7 @@ interface Props {
 const AddBranchForm: React.FC<Props> = ({ onClose }) => {
     const dispatch = useDispatch();
     
-    // Form state
+    
     const [form, setForm] = useState({
         name: '',
         manager: '',
@@ -20,11 +20,11 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
         country: '',
     });
 
-    // Validation state
+
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // STEP 1: Validation rules
+    
     const validationRules = {
         name: { required: true, minLength: 2 },
         manager: { required: true, minLength: 2 },
@@ -35,7 +35,7 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
         country: { required: true, minLength: 2 },
     };
 
-    // STEP 3: Validation functions
+    
     const validateField = (name: string, value: string): string => {
         const rules = validationRules[name as keyof typeof validationRules];
         
@@ -69,13 +69,13 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
         return Object.keys(newErrors).length === 0;
     };
 
-    // STEP 4: Updated handleChange function
+    
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         
         setForm({ ...form, [name]: value });
         
-        // Clear error when user starts typing
+    
         if (errors[name]) {
             const error = validateField(name, value);
             setErrors(prev => ({
@@ -85,7 +85,7 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
         }
     };
 
-    // STEP 5: Handle blur validation
+    
     const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         const error = validateField(name, value);
@@ -95,18 +95,18 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
         }));
     };
 
-    // STEP 6: Updated handleSubmit function
+    
     const handleSubmit = async () => {
-        // Validate all fields before submission
+        
         if (!validateForm()) {
-            return; // Stop submission if validation fails
+            return;
         }
         
         setIsSubmitting(true);
         
         try {
             await dispatch(addBranch(form)).unwrap();
-            // Reset form on success
+            
             setForm({
                 name: '',
                 manager: '',
@@ -117,7 +117,7 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
                 country: '',
             });
             setErrors({});
-            onClose?.(); // Close modal on success
+            onClose?.(); 
         } catch (err) {
             console.error('Failed to add branch:', err);
         } finally {
@@ -127,7 +127,7 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
 
     return (
         <div className="max-w-4xl mx-auto bg-white shadow-md rounded-md p-6 space-y-6">
-            {/* Header */}
+        
             <div className="flex items-center bg-[#0F766E33] justify-between border-b pb-4">
                 <div className=''>
                     <h2 className="text-2xl font-bold text-gray-800">Add New Branch</h2>
@@ -141,12 +141,13 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
                 </button>
             </div>
 
-            {/* Form Fields */}
+            
             <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-700">Branch Information</h3>
 
-                {/* Branch Name */}
+                
                 <div>
+                     <label className="block text-xs">Branch Name </label>
                     <input
                         type="text"
                         name="name"
@@ -159,13 +160,16 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
                         } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                     />
                     {errors.name && (
-                        <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+                        <p className="text-red-500 text-xs">{errors.name}</p>
                     )}
                 </div>
 
-                {/* City and Country */}
+            
                 <div className="grid grid-cols-2 gap-4">
                     <div>
+
+                     <label className="block text-xs">City </label>
+
                         <input
                             type="text"
                             name="city"
@@ -182,6 +186,8 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
                         )}
                     </div>
                     <div>
+                     <label className="block text-xs">Country </label>
+
                         <input
                             type="text"
                             name="country"
@@ -199,8 +205,10 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
                     </div>
                 </div>
 
-                {/* Branch Manager */}
+                
                 <div>
+                     <label className="block text-xs">Branch Manager </label>
+
                     <input
                         type="text"
                         name="manager"
@@ -217,9 +225,11 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
                     )}
                 </div>
 
-                {/* Email and Phone */}
+                
                 <div className="grid grid-cols-2 gap-4">
                     <div>
+                     <label className="block text-xs">Branch Email </label>
+
                         <input
                             type="email"
                             name="email"
@@ -236,6 +246,8 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
                         )}
                     </div>
                     <div>
+                     <label className="block text-xs">Branch Phone Number </label>
+
                         <input
                             type="text"
                             name="phone"
@@ -253,8 +265,10 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
                     </div>
                 </div>
 
-                {/* Address */}
+                
                 <div>
+                     <label className="block text-xs"> Branch Address </label>
+
                     <input
                         type="text"
                         name="address"

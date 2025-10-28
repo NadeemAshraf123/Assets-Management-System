@@ -60,7 +60,7 @@ const ConfirmDelete: React.FC<ConfirmDeleteProps> = ({
     <div className="fixed inset-0 bg-black/40 bg-opacity-50  flex items-center justify-center pt-20 p-4 z-50">
       <div className="bg-white rounded-lg max-w-md w-full mx-auto shadow-xl">
 
-        <div className="flex items-center space-x-3 p-6 border-b border-gray-200">
+        <div className="flex items-center space-x-3 p-4 border-b border-gray-200">
           <div className="flex-shrink-0">
             {styles.icon}
           </div>
@@ -70,7 +70,7 @@ const ConfirmDelete: React.FC<ConfirmDeleteProps> = ({
         </div>
 
     
-        <div className="p-6 text-center font-bold text-gray-900">
+        <div className="p-3 text-center font-bold text-gray-900">
           <p className="text-gray-600">{message}</p>
         </div>
 
