@@ -9,7 +9,7 @@ export interface Branch {
   manager: string;
   email: string;
   phone: string;
-  address: string;
+  branchaddress: string;
   city?: string;
   country?: string;
   status?: boolean;

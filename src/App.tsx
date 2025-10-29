@@ -4,6 +4,7 @@ import Sidebar from './components/layout/Sidebarr';
 import Header from './components/layout/Header';
 import BranchesPage from './components/pages /branches/BranchesPage';
 import BuildingsPage from './components/pages /buildings/BuildingsPage';
+import FloorsPage from './components/pages /floors/FloorsPage';
 
 function App() {
   return (
@@ -18,11 +19,15 @@ function App() {
         
         <div className="flex-1 flex flex-col min-w-0">
           <Header />
-          
+
           <div className="flex-1 overflow-auto bg-[#E1E7EF]">
             <Routes>
               <Route path="/" element={<BranchesPage />} />
+              <Route path="/branches" element={<BranchesPage />} />
+
               <Route path="/buildings" element={<BuildingsPage />} />
+              <Route path="/floors" element={<FloorsPage />  } />
+
             </Routes>
           </div>
         </div>

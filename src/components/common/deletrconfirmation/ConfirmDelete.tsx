@@ -1,5 +1,6 @@
-// components/common/ConfirmDelete.tsx
-import React from 'react';
+
+import React, {useRef} from 'react';
+import { useOutSideClick } from '../../../hooks/useOutSideClick';
 
 interface ConfirmDeleteProps {
   isOpen: boolean;
@@ -24,6 +25,11 @@ const ConfirmDelete: React.FC<ConfirmDeleteProps> = ({
   isLoading = false,
   type = 'delete'
 }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+  useOutSideClick(modalRef, () => {
+    if (isOpen) onClose();
+  });
+
   if (!isOpen) return null;
 
 
@@ -57,8 +63,8 @@ const ConfirmDelete: React.FC<ConfirmDeleteProps> = ({
   const styles = typeStyles[type];
 
   return (
-    <div className="fixed inset-0 bg-black/40 bg-opacity-50  flex items-center justify-center pt-20 p-4 z-50">
-      <div className="bg-white rounded-lg max-w-md w-full mx-auto shadow-xl">
+    <div  className="fixed inset-0 bg-black/40 bg-opacity-50  flex items-center justify-center pt-20 p-4 z-50">
+      <div ref={modalRef} className="bg-white rounded-lg max-w-md w-full mx-auto shadow-xl">
 
         <div className="flex items-center space-x-3 p-4 border-b border-gray-200">
           <div className="flex-shrink-0">
@@ -84,6 +90,7 @@ const ConfirmDelete: React.FC<ConfirmDeleteProps> = ({
           >
             {cancelText}
           </button>
+
           <button
             type="button"
             onClick={onConfirm}

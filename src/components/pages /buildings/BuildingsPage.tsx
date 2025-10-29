@@ -180,8 +180,8 @@ const BuildingsPage = () => {
       </div>
 
       <div className="pl-3 pr-14">
-        <div className="bg-[#005C5C] rounded-lg items-center">
-          <div className="p-2 flex justify-between">
+        <div className="bg-[#005C5C] rounded-lg p-2.5 items-center">
+          <div className="flex justify-between">
             <div className="flex gap-2">
               <Settings size={20} className="text-white items-center" />
               <h1 className="text-1xl font-semibold text-white">Buildings</h1>

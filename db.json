@@ -43,52 +43,20 @@
       "address": "Misri Shah, Lahore, Lahore City Tehsil, Lahore District, Lahore Division, Punjab, 54840, Pakistan",
       "latitude": 31.58328818020989,
       "longitude": 74.33512687683107
+    },
+    {
+      "id": "393f",
+      "name": "Enigmatix Tower Bahawalpur, Pakistan",
+      "branchId": 1108,
+      "branchName": "Enigmatix",
+      "type": "Software Institute Federaal science lahore",
+      "floors": 5,
+      "address": "Kandahar-Herat Highway, Zhari, Arghandab, Kandahar Province, 3860, Afghanistan",
+      "latitude": 31.62532121329918,
+      "longitude": 65.55267333984376
     }
   ],
   "branches": [
-    {
-      "id": "2023",
-      "name": "DHA Phase 100 Branch",
-      "manager": "Sara Khan",
-      "email": "amirshakeeliub@gmail.com",
-      "phone": "03277463564",
-      "address": "Commercial Area Near Khawaj Gareeb Nawaz Hotel Satellite Town Bhawalpure",
-      "city": "Bahawalpur, Punjab, Pakistan",
-      "country": "Pakistan"
-    },
-    {
-      "id": "d098",
-      "name": "DHA Phase 200 Branch",
-      "manager": "Jk Khan",
-      "email": "amirshakeeliub@gmail.com",
-      "phone": "+92-746-35645",
-      "address": "Commercial Area Near Khawaj Gareeb Nawaz Hotel Satellite Town Bhawalpure",
-      "city": "Bahawalpur, Punjab, Pakistan",
-      "country": "Pakistan"
-    },
-    {
-      "id": "f65c",
-      "name": "DHA Phase 4 Branch",
-      "manager": "Jhon Abrahm",
-      "email": "amirshakeeliub@gmail.com",
-      "phone": "03277463564",
-      "address": "Commercial Area Near Khawaj Gareeb Nawaz Hotel Satellite Town Bhawalpure",
-      "city": "Bahawalpur, Punjab, Pakistan",
-      "country": "Pakistan"
-    },
-    {
-      "id": "c187",
-      "name": "DHA Phase 300 Branch",
-      "manager": "Jhon Khan",
-      "email": "jhon123@gmail.com",
-      "phone": "0327 7463564",
-      "address": "Commercial Area Near Khawaj Gareeb Nawaz Hotel Satellite Town Bhawalpure",
-      "city": "london",
-      "country": "England",
-      "latitude": 31.51958115205496,
-      "longitude": 74.38035964965822,
-      "fullAddress": "Mobilink Flower Market, Sarfaraz Rafiqi Road (Cunnynghame Road), Lahore Cantonment, Lahore Cantonment Tehsil, Lahore District, Lahore Division, Punjab, 54810, Pakistan"
-    },
     {
       "id": "1108",
       "name": "Enigmatix",
@@ -103,6 +71,77 @@
       "address": "Lahore Cantonment, Lahore Cantonment Tehsil, Lahore District, Lahore Division, Punjab, 54810, Pakistan",
       "status": true,
       "groundMaintenance": true
+    },
+    {
+      "id": "e38c",
+      "name": "Enigmatix Tower",
+      "manager": "Abdullah Khalid",
+      "email": "amirshakeeliub@gmail.com",
+      "phone": "0327 7463564",
+      "branchaddress": "Canal Road, Bahawalpur City Tehsil, Bahawalpur Saddar Tehsil, Bahawalpur District, Bahawalpur Division, Punjab, Pakistan",
+      "city": "Bahawalpur, Punjab, Pakistan",
+      "country": "Pakistan",
+      "latitude": 29.314542477804405,
+      "longitude": 71.54468536376955,
+      "address": "Khanqah Sharif, Bahawalpur Saddar Tehsil, Bahawalpur District, Bahawalpur Division, Punjab, Pakistan",
+      "status": true,
+      "groundMaintenance": true
+    },
+    {
+      "id": "b522",
+      "name": "Enigmatix",
+      "manager": "Sara Khan",
+      "email": "amirshakeeliub@gmail.com",
+      "phone": "03277463564",
+      "branchaddress": "Taxila, Taxila Tehsil, Rawalpindi District, Rawalpindi Division, Punjab, 47080, Pakistan",
+      "city": "Bahawalpur, Punjab, Pakistan",
+      "country": "Pakistan",
+      "status": true,
+      "groundMaintenance": true,
+      "latitude": 33.747180448149855,
+      "longitude": 72.81223297119142,
+      "address": "Hansa Colony, G-8/1, G-8, Islamabad, Zone 1, Islamabad Capital Territory, 44000, Pakistan"
+    }
+  ],
+  "floors": [
+    {
+      "id": 1,
+      "floorName": "Ground Floor",
+      "branchId": 1,
+      "branchName": "Gulberg Main Branch",
+      "buildingId": 1,
+      "buildingName": "Liberty Tower",
+      "floorNumber": 0,
+      "totalArea": 4500.42,
+      "floorPlan": "liberty_groundfloor.pdf",
+      "status": "Active",
+      "createdAt": "2023-04-04"
+    },
+    {
+      "id": 2,
+      "floorName": "First Floor",
+      "branchId": 1,
+      "branchName": "Gulberg Main Branch",
+      "buildingId": 1,
+      "buildingName": "Liberty Tower",
+      "floorNumber": 1,
+      "totalArea": 4600,
+      "floorPlan": "liberty_firstfloor.pdf",
+      "status": "Active",
+      "createdAt": "2023-04-04"
+    },
+    {
+      "id": "3cec",
+      "floorName": "Second Floor",
+      "branchId": "1108",
+      "branchName": "Enigmatix",
+      "buildingId": "Liberty Tower,Islamabad",
+      "buildingName": "Liberty Tower,Islamabad",
+      "floorNumber": 2,
+      "totalArea": 4500,
+      "floorPlan": "WhatsApp Image 2025-10-18 at 8.29.57 PM.jpeg",
+      "status": "Active",
+      "createdAt": "2025-10-29"
     }
   ]
 }

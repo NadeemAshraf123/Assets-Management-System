@@ -9,7 +9,7 @@ import { MapContainer, TileLayer, useMapEvents, Marker, Popup } from "react-leaf
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
-// ✅ Fix Leaflet marker icons (for Vite/React setups)
+
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -20,7 +20,7 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
-// ✅ Validation schema
+
 const branchSchema = z.object({
   name: z.string().min(2, "Branch name must be at least 2 characters"),
   manager: z.string().min(2, "Manager name must be at least 2 characters"),
@@ -37,7 +37,7 @@ const branchSchema = z.object({
 
 type BranchFormData = z.infer<typeof branchSchema>;
 
-// ✅ Helper function: lat/lng → readable address
+
 const getAddressFromCoords = async (lat: number, lng: number): Promise<string> => {
   try {
     const response = await fetch(
@@ -80,7 +80,7 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
     },
   });
 
-  // ✅ Map click handler: updates lat, lng, and address field
+  
   const MapClickHandler = () => {
     useMapEvents({
       click: async (e) => {
@@ -92,13 +92,13 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
         setValue("longitude", lng);
 
         const address = await getAddressFromCoords(lat, lng);
-        setValue("branchaddress", address); // 👈 updated field
+        setValue("branchaddress", address);
       },
     });
     return null;
   };
 
-  // ✅ Submit form
+
   const onSubmit = async (data: BranchFormData) => {
     try {
       await dispatch(addBranch(data)).unwrap();
@@ -111,11 +111,11 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
   return (
     <div
       ref={modalRef}
-      className="max-w-4xl mx-auto bg-white shadow-md rounded-md p-6 space-y-6"
+      className=" bg-white rounded-md space-y-6"
     >
-      {/* Header */}
-      <div className="flex items-center bg-[#0F766E33] justify-between border-b pb-4">
-        <div>
+
+      <div className="flex items-center bg-[#0F766E33] justify-between p-6">
+        <div className="">
           <h2 className="text-2xl font-bold text-gray-800">Add New Branch</h2>
           <p className="text-sm text-gray-500">Add New Branch in system</p>
         </div>
@@ -127,13 +127,13 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
         </button>
       </div>
 
-      {/* Form */}
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-6">
         <h3 className="text-lg font-semibold text-gray-700">
           Branch Information
         </h3>
 
-        {/* Branch Name */}
+    
         <div>
           <label className="block text-xs">Branch Name</label>
           <input
@@ -149,7 +149,7 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
           )}
         </div>
 
-        {/* City & Country */}
+    
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-xs">City</label>
@@ -185,7 +185,7 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
           </div>
         </div>
 
-        {/* Manager */}
+        
         <div>
           <label className="block text-xs">Branch Manager</label>
           <input
@@ -203,7 +203,7 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
           )}
         </div>
 
-        {/* Email / Phone */}
+    
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-xs">Branch Email</label>
@@ -239,7 +239,7 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
           </div>
         </div>
 
-        {/* ✅ Branch Address — updated to receive map address */}
+    
         <div>
           <label className="block text-xs">Branch Address</label>
           <input
@@ -257,10 +257,10 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
           )}
         </div>
 
-        {/* Map */}
-        <div className="w-full h-64 rounded-md overflow-hidden">
+        
+        <div className="w-full h-48 rounded-md overflow-hidden">
           <MapContainer
-            center={[31.5204, 74.3587]} // Default Lahore
+            center={[31.5204, 74.3587]}
             zoom={12}
             className="h-full w-full"
           >
@@ -277,12 +277,12 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
           </MapContainer>
         </div>
 
-        {/* Buttons */}
+        
         <div className="flex justify-end gap-4 pt-4">
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`bg-teal-600 text-white px-6 py-2 rounded-md text-sm hover:bg-teal-700 ${
+            className={`bg-teal-600 cursor-pointer text-white px-6 py-2 rounded-md text-sm hover:bg-teal-700 ${
               isSubmitting ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >
@@ -292,7 +292,7 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className={`border border-gray-300 text-gray-700 px-6 py-2 rounded-md text-sm hover:bg-gray-100 ${
+            className={`border cursor-pointer border-gray-300 text-gray-700 px-6 py-2 rounded-md text-sm hover:bg-gray-100 ${
               isSubmitting ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >

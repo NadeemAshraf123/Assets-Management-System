@@ -19,6 +19,7 @@
     "@tailwindcss/vite": "^4.1.16",
     "axios": "^1.12.2",
     "json-server": "^1.0.0-beta.3",
+    "jspdf": "^3.0.3",
     "leaflet": "^1.9.4",
     "lucide": "^0.546.0",
     "lucide-react": "^0.546.0",

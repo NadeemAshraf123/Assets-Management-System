@@ -25,8 +25,11 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
   const filteredSuggestions = showSuggestions
     ? suggestions
-    : suggestions.filter((item) =>
-        item.toLowerCase().includes(value.toLowerCase())
+    : suggestions.filter((item) => {
+      const label = typeof item === "string" ? item : item.label;
+      return label.toLowerCase().includes(value.toLowerCase());
+
+    }
       );
 
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -66,11 +69,13 @@ const SearchBar: React.FC<SearchBarProps> = ({
               key={index}
               className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
               onClick={() => {
-                onChange(item);
+                const label = typeof item === "string" ? item : item.label;
+                onChange(label);
                 setShowSuggestions(false);
               }}
             >
-              {item}
+              {/* {item} */}
+              {typeof item === "string" ? item : item.label}
             </li>
           ))}
         </ul>

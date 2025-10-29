@@ -1,5 +1,17 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Frame from "../../assets/Frame.png";
+import Icon from "../../assets/Icon.png";
+import portfolio from "../../assets/portfolio.png";
+import survey from "../../assets/survey.png";
+import task from "../../assets/task.png";
+import quote from "../../assets/quote.png";
+import serviceprovider from "../../assets/serviceprovider.png";
+import library from "../../assets/library.png";
+import reports from "../../assets/reports.png";
+import compliance from "../../assets/compliance.png";
+import finance from "../../assets/finance.png";
+import administration from "../../assets/administration.png";
 
 interface SidebarItem {
   id: string;
@@ -10,10 +22,12 @@ interface SidebarItem {
 }
 
 const Sidebar: React.FC = () => {
+  const navigate = useNavigate();
   const [sidebarItems, setSidebarItems] = useState<SidebarItem[]>([
     {
       id: "dashboard",
       label: "Dashboard",
+      icon: Icon,
       children: [
         { id: "portfolio", label: "Portfolio" },
         { id: "explore", label: "Explore" },
@@ -25,6 +39,8 @@ const Sidebar: React.FC = () => {
     {
       id: "task-management",
       label: "Task Management",
+      icon: task,
+
       children: [
         { id: "my-tasks", label: "My Tasks" },
         { id: "ticket-manager", label: "Ticket Manager" },
@@ -50,11 +66,13 @@ const Sidebar: React.FC = () => {
     {
       id: "quote",
       label: "Quote",
+      icon: quote,
       children: [{ id: "quote-manager", label: "Quote Manager" }],
     },
     {
       id: "service-providers",
       label: "Service Providers",
+      icon: serviceprovider,
       children: [
         { id: "service-providers-list", label: "Service Providers" },
         { id: "users", label: "Users" },
@@ -64,6 +82,7 @@ const Sidebar: React.FC = () => {
     {
       id: "documents",
       label: "Documents",
+      icon: library,
       children: [
         { id: "library", label: "Library" },
         { id: "explorer", label: "Explorer" },
@@ -73,20 +92,28 @@ const Sidebar: React.FC = () => {
     {
       id: "compliance",
       label: "Compliance",
+      icon: compliance,
       children: [{ id: "compliance-overview", label: "Compliance overview" }],
     },
     {
       id: "finances",
       label: "Finances",
+      icon: finance,
     },
     {
       id: "administration",
       label: "Administration",
+      icon: administration,
       children: [
         { id: "my-profile", label: "My Profile" },
         { id: "my-notifications", label: "My notifications" },
         { id: "users", label: "Users" },
         { id: "contacts", label: "Contacts" },
+
+        { id: "branches", label: "Branches" },
+        { id: "buildings", label: "Buildings" },
+        { id: "floors", label: "Floors" },
+        { id: "spaces", label: "Spaces" },
       ],
     },
   ]);
@@ -99,15 +126,15 @@ const Sidebar: React.FC = () => {
     );
   };
 
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
+
   return (
     <div className="w-64 bg-[#0F766E] text-white h-screen overflow-y-auto">
-
-<div className="flex items-center px-6 py-3 bg-[#005C5C] border-b border-gray-700">
-  <img src={Frame} alt="ASSETS Logo" className="h-8 w-auto" />
-</div>
-
-
-
+      <div className="flex items-center px-6 py-3 bg-[#005C5C] border-b border-gray-700">
+        <img src={Frame} alt="ASSETS Logo" className="h-8 w-auto" />
+      </div>
 
       <nav className="py-4">
         {sidebarItems.map((item) => (
@@ -118,7 +145,16 @@ const Sidebar: React.FC = () => {
                 item.children ? "font-semibold" : "font-normal"
               }`}
             >
-              <span className="text-sm">{item.label}</span>
+              <span className="flex items-center gap-2 text-sm">
+                {item.icon && (
+                  <img
+                    src={item.icon}
+                    alt={`${item.label} icon`}
+                    className="w-4 h-4 object-contain"
+                  />
+                )}
+                {item.label}
+              </span>
               {item.children && (
                 <svg
                   className={`w-4 h-4 transform transition-transform ${
@@ -140,15 +176,38 @@ const Sidebar: React.FC = () => {
 
             
             {item.children && item.isOpen && (
-              <div className="ml-4 border-l border-gray-700">
-                {item.children.map((child) => (
-                  <button
-                    key={child.id}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
-                  >
-                    {child.label}
-                  </button>
-                ))}
+              <div className="ml-4">
+                {item.children.map((child) => {
+                  const hasPage = [
+                    "branches",
+                    "buildings",
+                    "floors",
+                    "spaces",
+                  ].includes(child.id);
+
+                  return (
+                    <button
+                      key={child.id}
+                      onClick={() =>
+                        hasPage && handleNavigation(`/${child.id}`)
+                      }
+                      className={`w-full text-left px-4 py-2 text-sm flex items-center gap-3 transition-colors ${
+                        hasPage
+                          ? "text-gray-300 hover:bg-gray-800 hover:text-white cursor-pointer"
+                          : "text-gray-300 hover:bg-gray-800 hover:text-white cursor-pointer"
+                      }`}
+                      disabled={!hasPage}
+                    >
+                      <span className="w-2 h-2 bg-white rounded-full flex-shrink-0"></span>
+                      <span>{child.label}</span>
+                      {!hasPage && (
+                        <span className="text-xs text-gray-400 ml-auto hidden">
+                          (Coming Soon)
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>

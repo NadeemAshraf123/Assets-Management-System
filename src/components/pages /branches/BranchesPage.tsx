@@ -91,23 +91,6 @@ const branchNames = useSelector((state: RootState) => state.branches.branchNames
         </div>
       </div>
 
-      {showAddModal && (
-        <div className="fixed h-screen inset-0 bg-black/50 bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-md shadow-lg w-full max-w-3xl p-6 relative">
-            <AddBranchForm onClose={closeModal} />
-          </div>
-        </div>
-      )}
-      {selectedBranch && (
-        <div className="fixed h-screen inset-0 bg-black/60 bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-md shadow-lg w-full max-w-3xl relativ">
-            <EditBranchModal
-              branch={selectedBranch}
-              onClose={() => setSelectedBranch(null)}
-            />
-          </div>
-        </div>
-      )}
       <div className="pl-7 pr-14">
         <div className="bg-white rounded-lg p-3 ">
           <SearchBar
@@ -142,7 +125,7 @@ const branchNames = useSelector((state: RootState) => state.branches.branchNames
                   <th className="px-4 py-2 text-left truncate max-w-[200px]">
                     Branch Phone Number
                   </th>
-                  <th className="px-4 py-2 text-left">Address</th>
+                  <th className="px-4 py-2 text-left">Branch Address</th>
                   <th className="px-4 py-2 text-left">Actions</th>
                 </tr>
               </thead>
@@ -165,9 +148,9 @@ const branchNames = useSelector((state: RootState) => state.branches.branchNames
                     <td className="px-4 py-2">{branch.phone}</td>
                     <td
                       className="px-4 py-2 truncate max-w-[180px] text-ellipsis overflow-hidden whitespace-nowrap "
-                      title={branch.address}
+                      title={branch.branchaddress}
                     >
-                      {branch.address}
+                      {branch.branchaddress}
                     </td>
                     <td className="px-4 py-2 truncate max-w-[180px] flex gap-2">
                       <button
@@ -204,6 +187,26 @@ const branchNames = useSelector((state: RootState) => state.branches.branchNames
           )}
         </div>
       </div>
+
+
+       {showAddModal && (
+        <div className="fixed h-screen inset-0 bg-black/50 bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-md shadow-lg w-full max-w-2xl relative">
+            <AddBranchForm onClose={closeModal} />
+          </div>
+        </div>
+      )}
+      
+      {selectedBranch && (
+        <div className="fixed h-screen inset-0 bg-black/60 bg-opacity-40 flex items-center justify-center z-50">
+          <div className=" w-full max-w-2xl relativ">
+            <EditBranchModal
+              branch={selectedBranch}
+              onClose={() => setSelectedBranch(null)}
+            />
+          </div>
+        </div>
+      )}
 
       <ConfirmDelete
         isOpen={isOpen}
