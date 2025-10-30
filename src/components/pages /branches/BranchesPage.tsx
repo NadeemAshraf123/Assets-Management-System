@@ -63,49 +63,49 @@ const branchNames = useSelector((state: RootState) => state.branches.branchNames
   const promptDeleteBranch = (branch: Branch) => {
     showConfirm(() => handleDeleteBranch(branch.id), {
       title: "Delete Branch?",
-      message: `Are you sure you want to delete branch "${branch.name}"? This action be undone.`,
+      message: `Are you sure you want to delete branch "${branch.name}"?`,
     });
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y">
       <div className="text-sm text-[#0F766E] bg-white p-3 flex items-center gap-2">
         <img src={logo} alt="Company Logo" className="w-10 h-10" />
         Administration &gt; Settings &gt;{" "}
         <span className="text-[#0F766E] font-medium">Branches</span>
       </div>
 
-      <div className="pl-3 pr-14">
-        <div className="flex items-center rounded-xl p-2 bg-[#005C5C] justify-between">
-          <div className="flex items-center gap-2 text-lg font-semibold text-white">
+      <div className="pl-6 pr-6 pt-6 pb-[13px]">
+        <div className="flex items-center rounded-lg p-2 bg-[#005C5C] justify-between">
+          <div className="flex items-center gap-2 lg:text-lg font-semibold text-white">
             <Settings size={20} className="text-white" />
             <span>Branches</span>
           </div>
 
           <button
             onClick={openModal}
-            className="bg-blue-600 cursor-pointer text-white text-xs px-4 py-1 rounded-md text-sm hover:bg-blue-700"
+            className="bg-blue-600 cursor-pointer text-white text-xs px-2 md:px-4 py-1 rounded-md text-sm hover:bg-blue-700"
           >
             + Add New Branch
           </button>
         </div>
       </div>
 
-      <div className="pl-7 pr-14">
+      <div className=" pl-6 pr-6 pt-0 pb-[13px]">
         <div className="bg-white rounded-lg p-3 ">
           <SearchBar
             placeholder="Search Branch Name"
             value={selectedBranchName}
             onChange={(value) => setSelectedBranchName(value)}
             showDropdownIcon={true}
-            className="w-sm"
+            className="w-sm "
             suggestions={branchNames}
             readOnly={true}
           />
         </div>
       </div>
 
-      <div className="pl-7 pr-14">
+      <div className=" pl-6 pr-6 pt-0">
         <div className="overflow-x-auto bg-white rounded-xl">
           {loading ? (
             <div className="text-center py-4 text-gray-500">

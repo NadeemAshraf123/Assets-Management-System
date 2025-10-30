@@ -118,7 +118,7 @@ const AddBuildingForm: React.FC<AddBuildingFormProps> = ({
   return (
     <div
       ref={modalRef}
-      className="bg-white rounded-lg shadow-lg w-full max-w-2xl mx-auto"
+      className="bg-white max-h-screen overflow-y-auto rounded-lg shadow-lg w-full max-w-2xl mx-auto"
     >
     
       <div className="bg-[#d7e7e2] px-6 py-4 rounded-t-lg flex justify-between items-center">

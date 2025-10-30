@@ -17,6 +17,8 @@ import { Eye } from "lucide-react";
 import AddFloorForm from "./AddFloorForm";
 import { fetchBranches } from "../../../features/branches/BranchesSlice";
 import EditFloorForm from "../floors/EditFloorForm";
+import { useNavigate } from "react-router-dom";
+import { fetchBuildings } from "../../../features/building/BuildingSlice";
 
 const FloorsPage = () => {
   const dispatch = useDispatch();
@@ -33,12 +35,14 @@ const FloorsPage = () => {
   const buildingTypes = useSelector(selectBuildingTypes);
   const [floorToEdit, setFloorToEdit] = useState<any>(null);
   const [modalMode, setModalMode] = useState<"add" | "edit" | null>(null);
+  const navigate = useNavigate();
 
   const { branches } = useSelector((state: any) => state.branches);
-
+  const { buildings } = useSelector((state: any) => state.buildings);
   useEffect(() => {
     dispatch(fetchFloors() as any);
     dispatch(fetchBranches() as any);
+    dispatch(fetchBuildings() as any);
   }, [dispatch]);
 
   const filteredFloors =
@@ -56,6 +60,13 @@ const FloorsPage = () => {
     setIsDeleteConfirmOpen(true);
   };
 
+  const handleViewFloorPlan = (base64: string) => {
+    const win = window.open();
+    if (win) {
+      win.document.write(`<img src="${base64}" style="max-width:100%;"/>`);
+    }
+  };
+
   const handleAddClick = () => {
     setModalMode("add");
     setIsModalOpen(true);
@@ -70,6 +81,13 @@ const FloorsPage = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
   };
+//   const handleViewFloorPlan = (base64: string) => {
+//   const win = window.open();
+//   if (win) {
+//     win.document.write(`<img src="${base64}" style="max-width:100%;"/>`);
+//   }
+// };
+
 
   const handleFormSubmit = async (formData: any) => {
     const selectedBranch = branches.find(
@@ -87,7 +105,7 @@ const FloorsPage = () => {
       buildingName: selectedBuilding?.name || "",
       floorNumber: formData.floorNumber,
       totalArea: formData.totalArea,
-      floorPlan: formData.floorPlan.name,
+      floorPlan: formData.floorPlan,
       status: "Active",
       createdAt: new Date().toISOString().split("T")[0],
     };
@@ -128,9 +146,12 @@ const FloorsPage = () => {
     setIsDeleteConfirmOpen(false);
     setFloorToDelete(null);
   };
+  const handleclick = () => {
+    navigate("/floors");
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y">
       <div className="bg-white p-3">
         <div className="text-sm text-[#0F766E] flex items-center gap-2">
           <img src={logo} alt="Settings" className="w-10 h-10" />
@@ -139,7 +160,7 @@ const FloorsPage = () => {
         </div>
       </div>
 
-      <div className="pl-3 pr-14">
+      <div className="pl-6 pt-6 pr-6 pb-3 ">
         <div className="bg-[#005C5C] rounded-lg p-2.5 items-center">
           <div className="flex justify-between">
             <div className="flex gap-2">
@@ -168,8 +189,8 @@ const FloorsPage = () => {
         </div>
       )}
 
-      <div className="pl-7 pr-14">
-        <div className="flex gap-4 p-3 rounded-sm bg-white">
+      <div className="pl-6 pr-6 pt-0 pb-3">
+        <div className="flex flex-col md:flex md:flex-row gap-4 p-3 rounded-md bg-white">
           <SearchBar
             placeholder="Search Floors"
             value={searchName}
@@ -187,8 +208,8 @@ const FloorsPage = () => {
         </div>
       </div>
 
-      <div className="pl-7 pr-14">
-        <div className="overflow-x-auto bg-white rounded-2xl shadow">
+      <div className="pl-6 pr-6">
+        <div className="overflow-x-auto bg-white rounded-xl shadow">
           <table className="w-full border border-gray-300 text-sm">
             <thead className="bg-[#FFFFFF] text-left">
               <tr>
@@ -282,20 +303,20 @@ const FloorsPage = () => {
                     >
                       {floor.totalArea} sq ft
                     </td>
+
                     <td
                       className="px-4 py-3 truncate max-w-[180px]"
                       title={floor.buildingName}
                     >
                       <a
-                        href={`/${floor.floorPlan}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800"
+                        onClick={() => handleViewFloorPlan(floor.floorPlan)}
+                        className="text-blue-600 cursor-pointer hover:text-blue-800"
                         title="View Floor Plan"
                       >
                         <Eye className="w-4 h-4" />
                       </a>
                     </td>
+
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
                         <button
@@ -335,6 +356,7 @@ const FloorsPage = () => {
             branches={branches}
             onSubmit={handleFormSubmit}
             onCancel={handleCloseModal}
+            buildings={buildings}
           />
         </div>
       )}

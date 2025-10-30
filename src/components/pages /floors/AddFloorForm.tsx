@@ -12,6 +12,7 @@ interface Branch {
 
 interface AddFloorFormProps {
   branches: Branch[];
+  buildings: Building[];
   onSubmit: (data: any) => void;
   onCancel: () => void;
 }
@@ -27,8 +28,18 @@ const floorSchema = z.object({
     .refine((file) => file?.length > 0, "Floor plan is required"),
 });
 
+const convertToBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+
+
 const AddFloorForm: React.FC<AddFloorFormProps> = ({
   branches,
+  buildings,
   onSubmit,
   onCancel,
 }) => {
@@ -53,12 +64,14 @@ const AddFloorForm: React.FC<AddFloorFormProps> = ({
     },
   });
 
-  const onFormSubmit = (data: any) => {
+  const onFormSubmit = async (data: any) => {
     const selectedBranch = branches.find((b) => b.id === data.branchId);
     const payload = {
       ...data,
       branchName: selectedBranch?.name || "",
-      floorPlan: data.floorPlan[0], 
+      floorPlan: data.floorPlan?.[0]
+      ? await convertToBase64(data.floorPlan[0])
+      : "",
     };
     onSubmit(payload);
   };
@@ -66,9 +79,8 @@ const AddFloorForm: React.FC<AddFloorFormProps> = ({
   return (
     <div
       ref={modalRef}
-      className="bg-white rounded-lg shadow-lg w-full max-w-2xl mx-auto"
+      className="bg-white max-h-screen overflow-y-auto rounded-lg shadow-lg w-full max-w-2xl mx-auto"
     >
-      
       <div className="bg-[#d7e7e2] px-6 py-4 rounded-t-lg flex justify-between items-center">
         <div>
           <h2 className="text-xl font-semibold text-gray-800">Add Floor</h2>
@@ -82,13 +94,11 @@ const AddFloorForm: React.FC<AddFloorFormProps> = ({
         </button>
       </div>
 
-      
       <form onSubmit={handleSubmit(onFormSubmit)} className="p-6 space-y-5">
         <h3 className="text-lg font-semibold text-gray-800">
           Floor Information
         </h3>
 
-        
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-gray-700">
             Branch Name
@@ -111,7 +121,6 @@ const AddFloorForm: React.FC<AddFloorFormProps> = ({
           )}
         </div>
 
-        
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-gray-700">
             Building Name
@@ -129,7 +138,6 @@ const AddFloorForm: React.FC<AddFloorFormProps> = ({
           )}
         </div>
 
-        
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-gray-700">
@@ -165,7 +173,6 @@ const AddFloorForm: React.FC<AddFloorFormProps> = ({
           </div>
         </div>
 
-        
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-gray-700">
             Floor Area (sq ft)
@@ -182,17 +189,36 @@ const AddFloorForm: React.FC<AddFloorFormProps> = ({
           )}
         </div>
 
-        
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
             Upload Floor Plan
           </label>
+
+          <label
+            htmlFor="floorPlanUpload"
+            className="border-2 border-dashed border-gray-300 rounded-lg px-4 py-6 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#0F766E] transition"
+          >
+          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+            <span className="text-sm text-gray-500">
+              Upload Floor Plan <br /> PNG, JPG, GIF up to 10MB
+            </span>
+            {watch("floorPlan") instanceof File && (
+              <span className="mt-2 text-xs text-gray-600">
+                Selected: {watch("floorPlan").name}
+              </span>
+            )}
+          </label>
+
           <input
+            id="floorPlanUpload"
             type="file"
             accept=".png,.jpg,.jpeg,.gif"
             {...register("floorPlan")}
-            className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="hidden"
           />
+
           {errors.floorPlan && (
             <p className="text-red-500 text-xs mt-1">
               {errors.floorPlan.message}
@@ -200,7 +226,6 @@ const AddFloorForm: React.FC<AddFloorFormProps> = ({
           )}
         </div>
 
-        
         <div className="flex justify-end gap-3 pt-4">
           <button
             type="button"

@@ -163,7 +163,7 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
   };
 
   return (
-    <div ref={modalRef} className="max-w-3xl rounded-2xl mx-auto bg-white space-y-6">
+    <div ref={modalRef} className="max-w-3xl rounded-2xl mx-auto bg-white space-y-6 overflow-y-auto max-h-screen">
       <div className="flex items-center text-black bg-[#D5E7E0] justify-between p-5">
         <div>
           <h2 className="text-2xl font-bold">Edit Branch</h2>

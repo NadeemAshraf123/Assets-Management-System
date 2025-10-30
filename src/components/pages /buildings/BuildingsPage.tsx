@@ -55,6 +55,7 @@ const BuildingsPage = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const buildingNames = useSelector(selectBuildingNames);
   const buildingTypes = useSelector(selectBuildingTypes);
+  
 
   useEffect(() => {
     dispatch(fetchBuildings() as any);
@@ -170,7 +171,7 @@ const BuildingsPage = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="">
       <div className="bg-white p-3">
         <div className="text-sm text-[#0F766E] flex items-center gap-2">
           <img src={logo} alt="Settings" className="w-10 h-10" />
@@ -179,15 +180,15 @@ const BuildingsPage = () => {
         </div>
       </div>
 
-      <div className="pl-3 pr-14">
+      <div className="pl-6 pr-6 pt-6 pb-3 ">
         <div className="bg-[#005C5C] rounded-lg p-2.5 items-center">
           <div className="flex justify-between">
             <div className="flex gap-2">
               <Settings size={20} className="text-white items-center" />
-              <h1 className="text-1xl font-semibold text-white">Buildings</h1>
+              <h1 className=" text-sm md:text-1xl font-semibold text-white">Buildings</h1>
             </div>
             <button
-              className="bg-blue-600 text-white text-xs px-3 rounded hover:bg-blue-700 flex items-center gap-2"
+              className="bg-blue-600 text-white text-xs px-1 md:px-3 rounded hover:bg-blue-700 flex items-center gap-1 md:gap-2"
               onClick={handleAddClick}
             >
               <FaPlus /> Add New Building
@@ -208,8 +209,8 @@ const BuildingsPage = () => {
         </div>
       )}
 
-      <div className="pl-7 pr-14">
-        <div className="flex gap-4 p-3 rounded-sm bg-white">
+      <div className="pl-6 pr-6 pt-0 pb-3">
+        <div className="flex flex-col md:flex md:flex-row gap-4 p-3 rounded-sm bg-white">
           <SearchBar
             placeholder="Search Building Name"
             value={searchName}
@@ -228,8 +229,8 @@ const BuildingsPage = () => {
         </div>
       </div>
 
-      <div className="pl-7 pr-14">
-        <div className="overflow-x-auto  bg-white rounded-2xl shadow">
+      <div className="pl-6 pr-6">
+        <div className="overflow-x-auto  bg-white rounded-xl shadow">
           <table className="w-full border border-gray-300 text-sm">
             <thead className="bg-[#FFFFFF] text-left">
               <tr>

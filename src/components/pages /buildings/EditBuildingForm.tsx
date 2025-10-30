@@ -95,7 +95,7 @@ const EditBuildingForm: React.FC<EditBuildingFormProps> = ({
   };
 
   return (
-    <div  className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div  className="fixed max-h-screen overflow-y-auto inset-0 bg-black/40 flex items-center justify-center z-50">
       <div ref={modalRef} className="bg-white rounded-2xl shadow-lg w-[750px] max-h-screen overflow-y-auto">
         <div  className="flex items-center justify-between bg-[#d5e7e0] px-6 py-4 rounded-t-2xl">
           <div>

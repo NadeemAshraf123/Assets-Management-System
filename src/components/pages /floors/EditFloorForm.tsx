@@ -18,6 +18,13 @@ const floorSchema = z.object({
   status: z.boolean().optional(),
   groundMaintenance: z.boolean().optional(),
 });
+const convertToBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
 
 interface EditFloorFormProps {
   initialData?: any;
@@ -25,7 +32,11 @@ interface EditFloorFormProps {
   onCancel: () => void;
 }
 
-const EditFloorForm: React.FC<EditFloorFormProps> = ({ initialData, onSubmit, onCancel }) => {
+const EditFloorForm: React.FC<EditFloorFormProps> = ({
+  initialData,
+  onSubmit,
+  onCancel,
+}) => {
   const dispatch = useDispatch();
   const modalRef = useRef<HTMLDivElement>(null);
   useOutSideClick(modalRef, () => onCancel?.());
@@ -39,8 +50,7 @@ const EditFloorForm: React.FC<EditFloorFormProps> = ({ initialData, onSubmit, on
   useEffect(() => {
     dispatch(fetchBranches());
     dispatch(fetchBuildings());
-    
-    
+
     if (initialData?.floorPlan) {
       setFileName("liberty_groundfloor.pdf");
     }
@@ -74,46 +84,49 @@ const EditFloorForm: React.FC<EditFloorFormProps> = ({ initialData, onSubmit, on
     }
   };
 
- const handleFormSubmit = async (data: any) => {
-  setIsSubmitting(true);
-  try {
-    console.log("Form data:", data);
-    console.log("Buildings available:", buildings);
-    console.log("Branches available:", branches);
+  const handleFormSubmit = async (data: any) => {
+    setIsSubmitting(true);
+    try {
+      console.log("Form data:", data);
+      console.log("Buildings available:", buildings);
+      console.log("Branches available:", branches);
 
-    if (!buildings) {
-      throw new Error("Buildings data is not available");
+      if (!buildings) {
+        throw new Error("Buildings data is not available");
+      }
+
+      if (!branches) {
+        throw new Error("Branches data is not available");
+      }
+
+      const branch = branches.find((b) => b.id.toString() === data.branchId);
+      const building = buildings.find(
+        (b) => b.id.toString() === data.buildingId
+      );
+
+      console.log("Found branch:", branch);
+      console.log("Found building:", building);
+
+      const payload = {
+        ...data,
+        branchName: branch?.name || "",
+        buildingName: building?.name || "",
+        floorPlan: data.floorPlan?.[0]
+          ? await convertToBase64(data.floorPlan[0])
+          : initialData?.floorPlan,
+        status: data.status ?? false,
+        groundMaintenance: data.groundMaintenance ?? false,
+      };
+
+      console.log("Final payload:", payload);
+      await onSubmit(payload);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+    } finally {
+      setIsSubmitting(false);
     }
+  };
 
-    if (!branches) {
-      throw new Error("Branches data is not available");
-    }
-
-    const branch = branches.find((b) => b.id.toString() === data.branchId);
-    const building = buildings.find((b) => b.id.toString() === data.buildingId);
-
-    console.log("Found branch:", branch);
-    console.log("Found building:", building);
-
-    const payload = {
-      ...data,
-      branchName: branch?.name || "",
-      buildingName: building?.name || "",
-      floorPlan: data.floorPlan?.[0] || initialData?.floorPlan,
-      status: data.status ?? false,
-      groundMaintenance: data.groundMaintenance ?? false,
-    };
-
-    console.log("Final payload:", payload);
-    await onSubmit(payload);
-  } catch (error) {
-    console.error("Error submitting form:", error);
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
-  
   const ToggleSwitch = ({ name, checked, register, label }: any) => (
     <div className="flex items-center justify-between py-3">
       <span className="text-sm font-medium text-gray-700">{label}</span>
@@ -130,33 +143,47 @@ const EditFloorForm: React.FC<EditFloorFormProps> = ({ initialData, onSubmit, on
   );
 
   return (
-    <div className="fixed inset-0 bg-black/10 flex items-center justify-center p-4 z-50">
-      <div ref={modalRef} className="bg-white rounded-lg shadow-lg w-full max-w-2xl mx-auto">
-        
+    <div className="fixed  inset-0 max-h-screen overflow-y-auto bg-black/10 flex items-center justify-center md:p-4 z-50">
+      <div
+        ref={modalRef}
+        className="bg-white w-full max-w-2xl rounded-lg shadow-lg mx-auto"
+      >
         <div className="px-6 py-4 bg-green-100 flex justify-between items-center">
           <div>
             <h2 className="text-xl font-semibold text-gray-800">Edit Floor</h2>
             <p className="text-sm text-gray-600">Edit Floor in system</p>
           </div>
-          <button 
-            onClick={onCancel} 
+          <button
+            onClick={onCancel}
             className="text-gray-400 hover:text-gray-600 transition-colors"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
 
         <form onSubmit={handleSubmit(handleFormSubmit)} className="p-6">
-          
           <div className="">
-            <h3 className="text-lg font-semibold text-gray-800 mb-1">Floor Information</h3>
-            
-            
+            <h3 className="text-lg font-semibold text-gray-800 mb-1">
+              Floor Information
+            </h3>
+
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Branch Name</label>
-              <select 
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Branch Name
+              </label>
+              <select
                 {...register("branchId")}
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white"
               >
@@ -167,13 +194,18 @@ const EditFloorForm: React.FC<EditFloorFormProps> = ({ initialData, onSubmit, on
                   </option>
                 ))}
               </select>
-              {errors.branchId && <p className="text-red-500 text-xs mt-1">{errors.branchId.message}</p>}
+              {errors.branchId && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.branchId.message}
+                </p>
+              )}
             </div>
 
-            
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Building Name</label>
-              <select 
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Building Name
+              </label>
+              <select
                 {...register("buildingId")}
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white"
               >
@@ -184,48 +216,68 @@ const EditFloorForm: React.FC<EditFloorFormProps> = ({ initialData, onSubmit, on
                   </option>
                 ))}
               </select>
-              {errors.buildingId && <p className="text-red-500 text-xs mt-1">{errors.buildingId.message}</p>}
+              {errors.buildingId && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.buildingId.message}
+                </p>
+              )}
             </div>
 
-            
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Floor Name</label>
-              <input 
-                type="text" 
-                {...register("floorName")} 
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Floor Name
+              </label>
+              <input
+                type="text"
+                {...register("floorName")}
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
-              {errors.floorName && <p className="text-red-500 text-xs mt-1">{errors.floorName.message}</p>}
+              {errors.floorName && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.floorName.message}
+                </p>
+              )}
             </div>
 
-            
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Floor Number</label>
-                <input 
-                  type="number" 
-                  {...register("floorNumber")} 
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Floor Number
+                </label>
+                <input
+                  type="number"
+                  {...register("floorNumber")}
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
-                {errors.floorNumber && <p className="text-red-500 text-xs mt-1">{errors.floorNumber.message}</p>}
+                {errors.floorNumber && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.floorNumber.message}
+                  </p>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Floor Area (sq ft)</label>
-                <input 
-                  type="number" 
-                  {...register("totalArea")} 
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Floor Area (sq ft)
+                </label>
+                <input
+                  type="number"
+                  {...register("totalArea")}
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
-                {errors.totalArea && <p className="text-red-500 text-xs mt-1">{errors.totalArea.message}</p>}
+                {errors.totalArea && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.totalArea.message}
+                  </p>
+                )}
               </div>
             </div>
           </div>
 
-          
           <div className="mb-6">
-            <h3 className="text-sm font-medium text-gray-700 mb-1">Floor Plan</h3>
-            
-            
+            <h3 className="text-sm font-medium text-gray-700 mb-1">
+              Floor Plan
+            </h3>
+
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 text-center">
               <input
                 type="file"
@@ -236,49 +288,70 @@ const EditFloorForm: React.FC<EditFloorFormProps> = ({ initialData, onSubmit, on
               />
               <label htmlFor="floorPlan" className="cursor-pointer">
                 <div className="flex flex-col items-center justify-center gap-2">
-                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  <svg
+                    className="w-8 h-8 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                    />
                   </svg>
-                  <span className="text-sm font-medium text-gray-700">Upload Floor Plan</span>
-                  <span className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    Upload Floor Plan
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    PNG, JPG, GIF up to 10MB
+                  </span>
                 </div>
               </label>
             </div>
 
-            
             {fileName && (
               <div className="flex items-center justify-between bg-gray-50 px-4 py-3 rounded-lg border border-gray-200">
                 <span className="text-sm text-gray-700">{fileName}</span>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setFileName("")}
                   className="text-gray-400 hover:text-gray-600"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
             )}
           </div>
 
-          
           <div className="">
-            <ToggleSwitch 
-              name="status" 
-              checked={initialData?.status} 
+            <ToggleSwitch
+              name="status"
+              checked={initialData?.status}
               register={register}
-              label="Status" 
+              label="Status"
             />
-            <ToggleSwitch 
-              name="groundMaintenance" 
-              checked={initialData?.groundMaintenance} 
+            <ToggleSwitch
+              name="groundMaintenance"
+              checked={initialData?.groundMaintenance}
               register={register}
-              label="Ground Maintenance" 
+              label="Ground Maintenance"
             />
           </div>
 
-          
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="submit"

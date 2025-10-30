@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import Frame from "../../assets/Frame.png";
 import Icon from "../../assets/Icon.png";
 import portfolio from "../../assets/portfolio.png";
 import survey from "../../assets/survey.png";
@@ -12,6 +11,7 @@ import reports from "../../assets/reports.png";
 import compliance from "../../assets/compliance.png";
 import finance from "../../assets/finance.png";
 import administration from "../../assets/administration.png";
+import { useOutSideClick } from "../../hooks/useOutSideClick";
 
 interface SidebarItem {
   id: string;
@@ -20,9 +20,17 @@ interface SidebarItem {
   children?: SidebarItem[];
   isOpen?: boolean;
 }
+interface SidebarProps {
+  isSidebarOpen: boolean;
+  setIsSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
-const Sidebar: React.FC = () => {
+const Sidebar: React.FC<SidebarProps> = ({
+  isSidebarOpen,
+  setIsSidebarOpen,
+}) => {
   const navigate = useNavigate();
+  const sidebarRef = useRef<HTMLDivElement>(null);
   const [sidebarItems, setSidebarItems] = useState<SidebarItem[]>([
     {
       id: "dashboard",
@@ -130,13 +138,42 @@ const Sidebar: React.FC = () => {
     navigate(path);
   };
 
+  useOutSideClick(sidebarRef, () => {
+    if (window.innerWidth < 1024) {
+      setIsSidebarOpen(false);
+    }
+  });
+
   return (
-    <div className="w-64 bg-[#0F766E] text-white h-screen overflow-y-auto">
-      <div className="flex items-center px-6 py-3 bg-[#005C5C] border-b border-gray-700">
-        <img src={Frame} alt="ASSETS Logo" className="h-8 w-auto" />
+    <div
+      ref={sidebarRef}
+      className={`fixed top-[64] left-0 h-[calc(100vh-64px)] w-64 bg-[#0F766E] text-white overflow-y-auto z-40 transition-transform duration-300
+  ${
+    isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+  } lg:translate-x-0 lg:static lg:block`}
+    >
+      <div className="absolute top-3 right-3 lg:hidden">
+        <button
+          onClick={() => setIsSidebarOpen(false)}
+          className="text-white hover:text-gray-300 transition-colors"
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
       </div>
 
-      <nav className="py-4">
+      <nav className="py-4 pt-12 pb-4 px-2">
         {sidebarItems.map((item) => (
           <div key={item.id} className="mb-1">
             <button
@@ -174,7 +211,6 @@ const Sidebar: React.FC = () => {
               )}
             </button>
 
-            
             {item.children && item.isOpen && (
               <div className="ml-4">
                 {item.children.map((child) => {

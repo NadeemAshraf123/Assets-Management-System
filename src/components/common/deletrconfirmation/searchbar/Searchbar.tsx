@@ -1,83 +1,85 @@
-import React, { useState, useRef } from "react";
-import { FaSearch, FaChevronDown } from "react-icons/fa";
+import React, { useRef, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { useOutSideClick } from "../../../../hooks/useOutSideClick";
 
 interface SearchBarProps {
   placeholder?: string;
   value: string;
   onChange: (value: string) => void;
-  showDropdownIcon?: boolean;
-  className?: string;
   suggestions?: string[];
-  readOnly?: boolean;
+  showDropdownIcon?: boolean;
+  required?: boolean;
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
-  placeholder = "Search...",
+  placeholder,
   value,
   onChange,
-  showDropdownIcon = false,
-  className = "",
   suggestions = [],
-  readOnly = false,
+  showDropdownIcon = true,
 }) => {
-  const [showSuggestions, setShowSuggestions] = useState(false);
-
-  const filteredSuggestions = showSuggestions
-    ? suggestions
-    : suggestions.filter((item) => {
-      const label = typeof item === "string" ? item : item.label;
-      return label.toLowerCase().includes(value.toLowerCase());
-
-    }
-      );
-
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(value || "");
+  // const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  useOutSideClick(wrapperRef, () => setShowSuggestions(false));
+  useOutSideClick(wrapperRef, () => setIsOpen(false));
+
+
+
+  const filteredOptions = suggestions.filter(
+    (opt) =>
+      opt &&
+      opt.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleSelect = (option: string) => {
+    onChange(option);
+    setSearchTerm(option);
+    setIsOpen(false);
+  };
 
   return (
-    <div ref={wrapperRef} className={`relative ${className}`}>
-      <FaSearch className="absolute left-3 top-2.5 text-gray-400 text-sm" />
+    <div ref={wrapperRef} className="relative w-full">
+      <div
+        className="flex items-center text-sm md:justify-between border border-gray-300 rounded-lg px-2 md:px-3 md:py-2 cursor-pointer hover:border-blue-400 transition"
+        onClick={() => setIsOpen((prev) => !prev)}
+      >
+        <input
+          type="text"
+          value={searchTerm}
+          onFocus={() => setIsOpen(true)}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            onChange(e.target.value);
+          }}
+          onClick={(e) => e.stopPropagation()}
+          placeholder={placeholder}
+          className="flex-1 outline-none bg-transparent"
+        />
+        {showDropdownIcon && (
+          <ChevronDown
+            className={`transition-transform duration-200 ${
+              isOpen ? "rotate-180" : ""
+            }`}
+          />
+        )}
+      </div>
 
-      <input
-        type="text"
-        value={value}
-        readOnly={readOnly}
-        onFocus={() => setShowSuggestions(true)}
-        onChange={(e) => {
-          onChange(e.target.value);
-          setShowSuggestions(true);
-        }}
-        placeholder={placeholder}
-        className="w-full pl-10 cursor-pointer py-2 text-sm rounded-lg bg-gray-100 border border-gray-300 focus:outline-none"
-      />
-
-      {showDropdownIcon && (
-        <button
-          type="button"
-          className="absolute cursor-pointer right-2 top-2.5 text-gray-400 text-sm focus:outline-none"
-          onClick={() => setShowSuggestions((prev) => !prev)}
-        >
-          <FaChevronDown />
-        </button>
-      )}
-
-      {showSuggestions && filteredSuggestions.length > 0 && (
-        <ul className="absolute z-10 bg-[#FFFFFF] rounded shadow mt-1 w-full max-h-60 overflow-auto text-sm">
-          {filteredSuggestions.map((item, index) => (
-            <li
-              key={index}
-              className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-              onClick={() => {
-                const label = typeof item === "string" ? item : item.label;
-                onChange(label);
-                setShowSuggestions(false);
-              }}
-            >
-              {/* {item} */}
-              {typeof item === "string" ? item : item.label}
-            </li>
-          ))}
+      {isOpen && (
+        <ul className="absolute z-10 bg-white border border-gray-300 rounded-lg w-full mt-1 max-h-40 overflow-y-auto shadow-md">
+          {filteredOptions.length > 0 ? (
+            filteredOptions.map((opt, index) => (
+              <li
+                key={index}
+                onClick={() => handleSelect(opt)}
+                className="px-3 py-2 hover:bg-blue-100 cursor-pointer"
+              >
+                {opt}
+              </li>
+            ))
+          ) : (
+            <li className="px-3 py-2 text-gray-500">No options found</li>
+          )}
         </ul>
       )}
     </div>

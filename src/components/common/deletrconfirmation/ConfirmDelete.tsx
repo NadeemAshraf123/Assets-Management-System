@@ -66,27 +66,27 @@ const ConfirmDelete: React.FC<ConfirmDeleteProps> = ({
     <div  className="fixed inset-0 bg-black/40 bg-opacity-50  flex items-center justify-center pt-20 p-4 z-50">
       <div ref={modalRef} className="bg-white rounded-lg max-w-md w-full mx-auto shadow-xl">
 
-        <div className="flex items-center space-x-3 p-4 border-b border-gray-200">
+        <div className="flex items-center space-x-3 p-2 md:p-4 border-b border-gray-200">
           <div className="flex-shrink-0">
             {styles.icon}
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+            <h3 className="text-sm md:text-lg font-semibold text-gray-900">{title}</h3>
           </div>
         </div>
 
     
-        <div className="p-3 text-center font-bold text-gray-900">
+        <div className="p-1 md:p-3 text-center text-xs md:text-lg   md:font-bold text-gray-900">
           <p className="text-gray-600">{message}</p>
         </div>
 
     
-        <div className="flex justify-between space-x-3 p-6 border-t border-gray-200">
+        <div className="flex justify-between space-x-3 p-3 md:p-6 border-t border-gray-200">
           <button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2  rounded-md bg-blue-500 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-2 py-1 md:px-4 md:py-2 md:text-md  rounded-md bg-blue-500 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {cancelText}
           </button>
@@ -95,7 +95,7 @@ const ConfirmDelete: React.FC<ConfirmDeleteProps> = ({
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            className={`px-4 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${styles.button} disabled:opacity-50 disabled:cursor-not-allowed`}
+            className={`px-2 py-1 md:px-4 md:py-2 md:text-md text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${styles.button} disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {isLoading ? (
               <div className="flex items-center space-x-2">

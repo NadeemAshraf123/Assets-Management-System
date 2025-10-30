@@ -109,12 +109,13 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
   };
 
   return (
-    <div
-      ref={modalRef}
-      className=" bg-white rounded-md space-y-6"
-    >
+   <div
+  ref={modalRef}
+  className="bg-white rounded-md space-y-6 overflow-y-auto max-h-screen"
+>
 
-      <div className="flex items-center bg-[#0F766E33] justify-between p-6">
+
+      <div className="flex overflow-y-auto items-center bg-[#0F766E33] justify-between p-6">
         <div className="">
           <h2 className="text-2xl font-bold text-gray-800">Add New Branch</h2>
           <p className="text-sm text-gray-500">Add New Branch in system</p>
