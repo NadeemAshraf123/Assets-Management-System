@@ -40,11 +40,17 @@ type BranchFormData = z.infer<typeof branchSchema>;
 
 const getAddressFromCoords = async (lat: number, lng: number): Promise<string> => {
   try {
+    const API_KEY = 'pk.65958886264c7a690901d6e835474761';
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
+      `https://us1.locationiq.com/v1/reverse?key=${API_KEY}&lat=${lat}&lon=${lng}&format=json`
     );
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
     const data = await response.json();
-    return data.display_name || "Unknown address";
+    return data.display_name || "Address not found";
   } catch (error) {
     console.error("Geocoding error:", error);
     return "Address not found";

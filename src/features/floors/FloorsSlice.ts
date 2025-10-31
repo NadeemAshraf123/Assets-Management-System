@@ -1,28 +1,33 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
+const BASE_URL = "http://localhost:3001/floors";
+
+
 export const fetchFloors = createAsyncThunk("floors/fetchFloors", async () => {
-  const res = await axios.get("http://localhost:3001/floors");
+  const res = await axios.get(BASE_URL);
   return res.data;
 });
 
 export const addFloor = createAsyncThunk("floors/addFloor", async (floorData) => {
-  const res = await axios.post("http://localhost:3001/floors", floorData);
+  const res = await axios.post(BASE_URL, floorData);
   return res.data;
 });
+
 
 export const updateFloor = createAsyncThunk("floors/updateFloor", async ({ id, data }) => {
-  const res = await axios.put(`http://localhost:3001/floors/${id}`, data);
+  const res = await axios.put(`${BASE_URL}/${id}`, data);
   return res.data;
 });
 
-export const deleteFloor = createAsyncThunk("floors/deleteFloor", async (id: number) => {
-  await axios.delete(`http://localhost:3001/floors/${id}`);
+
+export const deleteFloor = createAsyncThunk("floors/deleteFloor", async (id: string) => {
+  await axios.delete(`${BASE_URL}/${id}`);
   return id;
 });
 
-export const selectFloorNames = (state) => state.floors.floors.map((f) => f.floorName);
 
+export const selectFloorNames = (state) => state.floors.floors.map((f) => f.floorName);
 export const selectBuildingTypes = (state) => [...new Set(state.floors.floors.map((f) => f.buildingName))];
 
 
@@ -55,11 +60,16 @@ const floorsSlice = createSlice({
         state.floors.push(action.payload);
       })
       .addCase(updateFloor.fulfilled, (state, action) => {
-        const index = state.floors.findIndex((f) => f.id === action.payload.id);
+        const id = action.payload.id || action.payload.floorId;
+        const index = state.floors.findIndex(
+          (f) => f.id === id || f.floorId === id
+        );
         if (index !== -1) state.floors[index] = action.payload;
       })
       .addCase(deleteFloor.fulfilled, (state, action) => {
-        state.floors = state.floors.filter((f) => f.id !== action.payload);
+        state.floors = state.floors.filter(
+          (f) => f.id !== action.payload && f.floorId !== action.payload
+        );
       });
   },
 });

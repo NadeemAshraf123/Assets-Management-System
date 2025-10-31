@@ -2,11 +2,19 @@ import React, { useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useSelector } from "react-redux";
+import { selectFloorNames } from "../../../features/floors/FloorsSlice";
+import { selectBuildingNames } from "../../../features/building/BuildingSlice";
 import { useOutSideClick } from "../../../hooks/useOutSideClick";
 import SearchBar from "../../common/deletrconfirmation/searchbar/Searchbar";
 
 interface Branch {
-  id: string;
+  id: number | string;
+  name: string;
+}
+
+interface Building {
+  id: number | string;
   name: string;
 }
 
@@ -25,7 +33,7 @@ const floorSchema = z.object({
   totalArea: z.coerce.number().min(1, "Area must be at least 1 sq ft"),
   floorPlan: z
     .any()
-    .refine((file) => file?.length > 0, "Floor plan is required"),
+    .refine((file) => file && file.length > 0, "Floor plan is required"),
 });
 
 const convertToBase64 = (file: File): Promise<string> =>
@@ -36,7 +44,6 @@ const convertToBase64 = (file: File): Promise<string> =>
     reader.onerror = (error) => reject(error);
   });
 
-
 const AddFloorForm: React.FC<AddFloorFormProps> = ({
   branches,
   buildings,
@@ -45,6 +52,9 @@ const AddFloorForm: React.FC<AddFloorFormProps> = ({
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   useOutSideClick(modalRef, () => onCancel?.());
+
+  const floorNames = useSelector(selectFloorNames);
+  const buildingNames = useSelector(selectBuildingNames);
 
   const {
     register,
@@ -64,17 +74,44 @@ const AddFloorForm: React.FC<AddFloorFormProps> = ({
     },
   });
 
-  const onFormSubmit = async (data: any) => {
-    const selectedBranch = branches.find((b) => b.id === data.branchId);
-    const payload = {
-      ...data,
+  
+  const onFormSubmit = async (formData: any) => {
+    
+    const floorFile =
+      formData.floorPlan instanceof FileList
+        ? formData.floorPlan[0]
+        : formData.floorPlan?.[0];
+
+    const floorPlanBase64 = floorFile
+      ? await convertToBase64(floorFile)
+      : "";
+
+    const selectedBranch = branches.find(
+      (b) => String(b.id) === String(formData.branchId)
+    );
+    const selectedBuilding = buildings.find(
+      (b) => String(b.id) === String(formData.buildingId)
+    );
+
+    const data = {
+      branchId: selectedBranch?.id || "",
       branchName: selectedBranch?.name || "",
-      floorPlan: data.floorPlan?.[0]
-      ? await convertToBase64(data.floorPlan[0])
-      : "",
+      buildingId: selectedBuilding?.id || "",
+      buildingName: selectedBuilding?.name || "",
+      floorName: formData.floorName,
+      floorNumber: formData.floorNumber,
+      totalArea: formData.totalArea,
+      floorPlan: floorPlanBase64,
+      status: "Active",
+      createdAt: new Date().toISOString(),
     };
-    onSubmit(payload);
+
+    onSubmit(data);
   };
+
+  const watchBranch = watch("branchId");
+  const watchBuilding = watch("buildingId");
+  const watchFile = watch("floorPlan");
 
   return (
     <div
@@ -84,11 +121,11 @@ const AddFloorForm: React.FC<AddFloorFormProps> = ({
       <div className="bg-[#d7e7e2] px-6 py-4 rounded-t-lg flex justify-between items-center">
         <div>
           <h2 className="text-xl font-semibold text-gray-800">Add Floor</h2>
-          <p className="text-sm text-gray-600">Add Floor in system</p>
+          <p className="text-sm text-gray-600">Add a new floor to the system</p>
         </div>
         <button
           onClick={onCancel}
-          className="text-gray-600 hover:text-gray-800"
+          className="text-gray-600 hover:text-gray-800 text-lg font-bold"
         >
           ✕
         </button>
@@ -105,15 +142,16 @@ const AddFloorForm: React.FC<AddFloorFormProps> = ({
           </label>
           <SearchBar
             placeholder="Select Branch"
-            value={watch("branchId")}
+            value={
+              branches.find((b) => String(b.id) === watchBranch)?.name || ""
+            }
             onChange={(val) => {
-              const selectedBranch = branches.find((b) => b.name === val);
-              setValue("branchId", selectedBranch?.id || "");
+              const selected = branches.find((b) => b.name === val);
+              if (selected) setValue("branchId", String(selected.id));
             }}
             showDropdownIcon={true}
             suggestions={branches.map((b) => b.name)}
           />
-
           {errors.branchId && (
             <p className="text-red-500 text-xs mt-1">
               {errors.branchId.message}
@@ -125,11 +163,17 @@ const AddFloorForm: React.FC<AddFloorFormProps> = ({
           <label className="text-sm font-medium text-gray-700">
             Building Name
           </label>
-          <input
-            type="text"
-            placeholder="Liberty Tower"
-            {...register("buildingId")}
-            className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          <SearchBar
+            placeholder="Select Building"
+            value={
+              buildings.find((b) => String(b.id) === watchBuilding)?.name || ""
+            }
+            onChange={(val) => {
+              const selected = buildings.find((b) => b.name === val);
+              if (selected) setValue("buildingId", String(selected.id));
+            }}
+            showDropdownIcon={true}
+            suggestions={buildings.map((b) => b.name)}
           />
           {errors.buildingId && (
             <p className="text-red-500 text-xs mt-1">
@@ -138,24 +182,25 @@ const AddFloorForm: React.FC<AddFloorFormProps> = ({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700">
-              Floor Name
-            </label>
-            <input
-              type="text"
-              placeholder="Ground Floor"
-              {...register("floorName")}
-              className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            />
-            {errors.floorName && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.floorName.message}
-              </p>
-            )}
-          </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700">
+            Floor Name
+          </label>
+          <SearchBar
+            placeholder="Enter Floor Name"
+            value={watch("floorName")}
+            onChange={(val) => setValue("floorName", val)}
+            showDropdownIcon={true}
+            suggestions={floorNames}
+          />
+          {errors.floorName && (
+            <p className="text-red-500 text-xs mt-1">
+              {errors.floorName.message}
+            </p>
+          )}
+        </div>
 
+        <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-gray-700">
               Floor Number
@@ -171,46 +216,54 @@ const AddFloorForm: React.FC<AddFloorFormProps> = ({
               </p>
             )}
           </div>
-        </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700">
-            Floor Area (sq ft)
-          </label>
-          <input
-            type="number"
-            {...register("totalArea", { valueAsNumber: true })}
-            className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-          />
-          {errors.totalArea && (
-            <p className="text-red-500 text-xs mt-1">
-              {errors.totalArea.message}
-            </p>
-          )}
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700">
+              Floor Area (sq ft)
+            </label>
+            <input
+              type="number"
+              {...register("totalArea", { valueAsNumber: true })}
+              className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+            {errors.totalArea && (
+              <p className="text-red-500 text-xs mt-1">
+                {errors.totalArea.message}
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col gap-1">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Upload Floor Plan
           </label>
-
           <label
             htmlFor="floorPlanUpload"
             className="border-2 border-dashed border-gray-300 rounded-lg px-4 py-6 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#0F766E] transition"
           >
-          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
+            <svg
+              className="w-8 h-8 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              />
+            </svg>
             <span className="text-sm text-gray-500">
               Upload Floor Plan <br /> PNG, JPG, GIF up to 10MB
             </span>
-            {watch("floorPlan") instanceof File && (
+            {watchFile && watchFile.length > 0 && (
               <span className="mt-2 text-xs text-gray-600">
-                Selected: {watch("floorPlan").name}
+                Selected: {watchFile[0]?.name}
               </span>
             )}
           </label>
-
           <input
             id="floorPlanUpload"
             type="file"
@@ -218,7 +271,6 @@ const AddFloorForm: React.FC<AddFloorFormProps> = ({
             {...register("floorPlan")}
             className="hidden"
           />
-
           {errors.floorPlan && (
             <p className="text-red-500 text-xs mt-1">
               {errors.floorPlan.message}
@@ -238,7 +290,7 @@ const AddFloorForm: React.FC<AddFloorFormProps> = ({
             type="submit"
             className="px-5 py-2 bg-emerald-700 text-white rounded hover:bg-emerald-800"
           >
-            Add
+            Add Floor
           </button>
         </div>
       </form>

@@ -6,6 +6,10 @@ import { useOutSideClick } from "../../../hooks/useOutSideClick";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchBranches } from "../../../features/branches/BranchesSlice";
 import { fetchBuildings } from "../../../features/building/BuildingSlice";
+import {
+  fetchFloors,
+  selectFloorNames,
+} from "../../../features/floors/FloorsSlice";
 import type { RootState } from "../../../app/Store";
 
 const floorSchema = z.object({
@@ -18,6 +22,7 @@ const floorSchema = z.object({
   status: z.boolean().optional(),
   groundMaintenance: z.boolean().optional(),
 });
+
 const convertToBase64 = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -43,6 +48,9 @@ const EditFloorForm: React.FC<EditFloorFormProps> = ({
 
   const { branches } = useSelector((state: RootState) => state.branches);
   const { buildings } = useSelector((state: RootState) => state.buildings);
+  const { floors } = useSelector((state: RootState) => state.floors);
+
+  const floorNames = useSelector(selectFloorNames);
 
   const [fileName, setFileName] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,6 +58,7 @@ const EditFloorForm: React.FC<EditFloorFormProps> = ({
   useEffect(() => {
     dispatch(fetchBranches());
     dispatch(fetchBuildings());
+    dispatch(fetchFloors());
 
     if (initialData?.floorPlan) {
       setFileName("liberty_groundfloor.pdf");
@@ -67,7 +76,7 @@ const EditFloorForm: React.FC<EditFloorFormProps> = ({
     defaultValues: {
       branchId: initialData?.branchId?.toString() || "",
       buildingId: initialData?.buildingId?.toString() || "",
-      floorName: initialData?.floorName || "Ground Floor",
+      floorName: initialData?.floorName || "",
       floorNumber: initialData?.floorNumber || 0,
       totalArea: initialData?.totalArea || 4500,
       status: initialData?.status || false,
@@ -87,25 +96,10 @@ const EditFloorForm: React.FC<EditFloorFormProps> = ({
   const handleFormSubmit = async (data: any) => {
     setIsSubmitting(true);
     try {
-      console.log("Form data:", data);
-      console.log("Buildings available:", buildings);
-      console.log("Branches available:", branches);
-
-      if (!buildings) {
-        throw new Error("Buildings data is not available");
-      }
-
-      if (!branches) {
-        throw new Error("Branches data is not available");
-      }
-
       const branch = branches.find((b) => b.id.toString() === data.branchId);
       const building = buildings.find(
         (b) => b.id.toString() === data.buildingId
       );
-
-      console.log("Found branch:", branch);
-      console.log("Found building:", building);
 
       const payload = {
         ...data,
@@ -118,7 +112,6 @@ const EditFloorForm: React.FC<EditFloorFormProps> = ({
         groundMaintenance: data.groundMaintenance ?? false,
       };
 
-      console.log("Final payload:", payload);
       await onSubmit(payload);
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -142,8 +135,13 @@ const EditFloorForm: React.FC<EditFloorFormProps> = ({
     </div>
   );
 
+  const floorNameValue = watch("floorName") || "";
+  const filteredSuggestions = floorNames.filter((name: string) =>
+    name.toLowerCase().includes(floorNameValue.toLowerCase())
+  );
+
   return (
-    <div className="fixed  inset-0 max-h-screen overflow-y-auto bg-black/10 flex items-center justify-center md:p-4 z-50">
+    <div className="fixed inset-0 max-h-screen overflow-y-auto bg-black/10 flex items-center justify-center md:p-4 z-50">
       <div
         ref={modalRef}
         className="bg-white w-full max-w-2xl rounded-lg shadow-lg mx-auto"
@@ -157,127 +155,122 @@ const EditFloorForm: React.FC<EditFloorFormProps> = ({
             onClick={onCancel}
             className="text-gray-400 hover:text-gray-600 transition-colors"
           >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
+            ✕
           </button>
         </div>
 
         <form onSubmit={handleSubmit(handleFormSubmit)} className="p-6">
-          <div className="">
-            <h3 className="text-lg font-semibold text-gray-800 mb-1">
-              Floor Information
-            </h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-3">
+            Floor Information
+          </h3>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Branch Name
-              </label>
-              <select
-                {...register("branchId")}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white"
-              >
-                <option value="">Select Branch</option>
-                {branches.map((branch) => (
-                  <option key={branch.id} value={branch.id}>
-                    {branch.name}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Branch Name
+            </label>
+            <select
+              {...register("branchId")}
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white"
+            >
+              <option value="">Select Branch</option>
+              {branches.map((branch) => (
+                <option key={branch.id} value={branch.id}>
+                  {branch.name}
+                </option>
+              ))}
+            </select>
+            {errors.branchId && (
+              <p className="text-red-500 text-xs mt-1">
+                {errors.branchId.message}
+              </p>
+            )}
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Building Name
+            </label>
+            <select
+              {...register("buildingId")}
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white"
+            >
+              <option value="">Select Building</option>
+              {buildings.map((building) => (
+                <option key={building.id} value={building.id}>
+                  {building.name}
+                </option>
+              ))}
+            </select>
+            {errors.buildingId && (
+              <p className="text-red-500 text-xs mt-1">
+                {errors.buildingId.message}
+              </p>
+            )}
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Floor Name
+            </label>
+            <select
+              {...register("floorName")}
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white"
+            >
+              <option value="">Select Floor</option>
+              {Array.isArray(floors) && floors.length > 0 ? (
+                floors.map((floor) => (
+                  <option key={floor.id} value={floor.floorName}>
+                    {floor.floorName}
                   </option>
-                ))}
-              </select>
-              {errors.branchId && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.branchId.message}
-                </p>
+                ))
+              ) : (
+                <option disabled>No floors available</option>
               )}
-            </div>
+            </select>
+            {errors.floorName && (
+              <p className="text-red-500 text-xs mt-1">
+                {errors.floorName.message}
+              </p>
+            )}
+          </div>
 
-            <div className="mb-4">
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Building Name
-              </label>
-              <select
-                {...register("buildingId")}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white"
-              >
-                <option value="">Select Building</option>
-                {buildings.map((building) => (
-                  <option key={building.id} value={building.id}>
-                    {building.name}
-                  </option>
-                ))}
-              </select>
-              {errors.buildingId && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.buildingId.message}
-                </p>
-              )}
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Floor Name
+                Floor Number
               </label>
               <input
-                type="text"
-                {...register("floorName")}
+                type="number"
+                {...register("floorNumber")}
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
-              {errors.floorName && (
+              {errors.floorNumber && (
                 <p className="text-red-500 text-xs mt-1">
-                  {errors.floorName.message}
+                  {errors.floorNumber.message}
                 </p>
               )}
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Floor Number
-                </label>
-                <input
-                  type="number"
-                  {...register("floorNumber")}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                />
-                {errors.floorNumber && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.floorNumber.message}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Floor Area (sq ft)
-                </label>
-                <input
-                  type="number"
-                  {...register("totalArea")}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                />
-                {errors.totalArea && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.totalArea.message}
-                  </p>
-                )}
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Total Area (sq ft)
+              </label>
+              <input
+                type="number"
+                {...register("totalArea")}
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              />
+              {errors.totalArea && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.totalArea.message}
+                </p>
+              )}
             </div>
           </div>
 
           <div className="mb-6">
-            <h3 className="text-sm font-medium text-gray-700 mb-1">
+            <label className="text-sm font-medium text-gray-700 mb-2 block">
               Floor Plan
-            </h3>
-
+            </label>
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 text-center">
               <input
                 type="file"
@@ -286,85 +279,54 @@ const EditFloorForm: React.FC<EditFloorFormProps> = ({
                 onChange={handleFileChange}
                 className="hidden"
               />
-              <label htmlFor="floorPlan" className="cursor-pointer">
-                <div className="flex flex-col items-center justify-center gap-2">
-                  <svg
-                    className="w-8 h-8 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                    />
-                  </svg>
-                  <span className="text-sm font-medium text-gray-700">
-                    Upload Floor Plan
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    PNG, JPG, GIF up to 10MB
-                  </span>
-                </div>
+              <label
+                htmlFor="floorPlan"
+                className="cursor-pointer text-sm text-gray-600"
+              >
+                Click to upload a file (PDF, JPG, PNG)
               </label>
             </div>
 
             {fileName && (
-              <div className="flex items-center justify-between bg-gray-50 px-4 py-3 rounded-lg border border-gray-200">
+              <div className="flex items-center justify-between bg-gray-50 px-4 py-3 rounded-lg border border-gray-200 mt-2">
                 <span className="text-sm text-gray-700">{fileName}</span>
                 <button
                   type="button"
                   onClick={() => setFileName("")}
                   className="text-gray-400 hover:text-gray-600"
                 >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
+                  ✕
                 </button>
               </div>
             )}
           </div>
 
-          <div className="">
-            <ToggleSwitch
-              name="status"
-              checked={initialData?.status}
-              register={register}
-              label="Status"
-            />
-            <ToggleSwitch
-              name="groundMaintenance"
-              checked={initialData?.groundMaintenance}
-              register={register}
-              label="Ground Maintenance"
-            />
-          </div>
+          <ToggleSwitch
+            name="status"
+            checked={initialData?.status}
+            register={register}
+            label="Status"
+          />
+          <ToggleSwitch
+            name="groundMaintenance"
+            checked={initialData?.groundMaintenance}
+            register={register}
+            label="Ground Maintenance"
+          />
 
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex justify-end gap-3 pt-4">
             <button
               type="submit"
               disabled={isSubmitting}
               className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? "Editing..." : "Edit"}
+              {isSubmitting ? "Saving..." : "Save Changes"}
             </button>
             <button
               type="button"
               onClick={onCancel}
               disabled={isSubmitting}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
             >
               Cancel
             </button>

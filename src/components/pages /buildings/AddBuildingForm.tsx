@@ -82,16 +82,26 @@ const AddBuildingForm: React.FC<AddBuildingFormProps> = ({
     },
   });
 
-  const handleMapClick = async (e: any) => {
-    const lat = e.latlng.lat;
-    const lng = e.latlng.lng;
+const handleMapClick = async (e: any) => {
+  const lat = e.latlng.lat;
+  const lng = e.latlng.lng;
 
+  try {
     const address = await getAddressFromCoords(lat, lng);
+
+    if (!address) {
+      console.warn("No address returned from reverse geocode");
+      return;
+    }
 
     setValue("latitude", lat);
     setValue("longitude", lng);
     setValue("fullAddress", address);
-  };
+  } catch (err) {
+    console.error("Reverse geocoding failed:", err);
+  }
+};
+
 
   const MapClickHandler = () => {
     const map = useMapEvents({

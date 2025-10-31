@@ -6,6 +6,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaf
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useOutSideClick } from "../../../hooks/useOutSideClick";
+import useReverseGeocode from "../../../hooks/useReverseGeocode";
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -42,28 +43,20 @@ const LocationMarker = ({
     }>
   >;
 }) => {
+  const { getAddressFromCoords } = useReverseGeocode(); 
+
   useMapEvents({
     async click(e) {
       const { lat, lng } = e.latlng;
 
+      const readableAddress = await getAddressFromCoords(lat, lng);
       
-      try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
-        );
-        const data = await response.json();
-        const readableAddress = data.display_name || "Unknown location";
-
-        
-        setForm((prev) => ({
-          ...prev,
-          latitude: lat,
-          longitude: lng,
-          branchaddress: readableAddress, 
-        }));
-      } catch (error) {
-        console.error("Error fetching address:", error);
-      }
+      setForm((prev) => ({
+        ...prev,
+        latitude: lat,
+        longitude: lng,
+        branchaddress: readableAddress,
+      }));
     },
   });
   return null;
@@ -96,25 +89,30 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
     manager: { required: true, minLength: 2 },
     email: { required: true, pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
     phone: { required: true, pattern: /^[+]?[\d\s-()]{10,}$/ },
-    address: { required: true, minLength: 5 },
+    branchaddress: { required: true, minLength: 5 },
     city: { required: true, minLength: 2 },
     country: { required: true, minLength: 2 },
   };
 
-  const validateField = (name: string, value: string): string => {
-    const rules = validationRules[name as keyof typeof validationRules];
-    if (rules.required && !value.trim())
-      return `${name.charAt(0).toUpperCase() + name.slice(1)} is required`;
-    if (rules.minLength && value.length < rules.minLength)
-      return `${name.charAt(0).toUpperCase() + name.slice(1)} must be at least ${
-        rules.minLength
-      } characters`;
-    if (rules.pattern && !rules.pattern.test(value)) {
-      if (name === "email") return "Please enter a valid email address";
-      if (name === "phone") return "Please enter a valid phone number";
-    }
-    return "";
-  };
+ const validateField = (name: string, value: string): string => {
+  const rules = validationRules[name as keyof typeof validationRules];
+  
+  if (value === undefined || value === null) {
+    return `${name.charAt(0).toUpperCase() + name.slice(1)} is required`;
+  }
+  
+  if (rules.required && !value.trim())
+    return `${name.charAt(0).toUpperCase() + name.slice(1)} is required`;
+  if (rules.minLength && value.length < rules.minLength)
+    return `${name.charAt(0).toUpperCase() + name.slice(1)} must be at least ${
+      rules.minLength
+    } characters`;
+  if (rules.pattern && !rules.pattern.test(value)) {
+    if (name === "email") return "Please enter a valid email address";
+    if (name === "phone") return "Please enter a valid phone number";
+  }
+  return "";
+};
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -298,7 +296,7 @@ const EditBranchModal: React.FC<Props> = ({ branch, onClose }) => {
             <label className="block text-xs">Branch Address </label>
             <input
               type="text"
-              name="address"
+              name="branchaddress"
               placeholder="Branch Address"
               value={form.branchaddress}
               onChange={handleChange}
