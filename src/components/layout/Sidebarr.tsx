@@ -147,7 +147,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   return (
     <div
       ref={sidebarRef}
-      className={`fixed top-[64] left-0 h-[calc(100vh-64px)] w-64 bg-[#0F766E] text-white overflow-y-auto z-40 transition-transform duration-300
+      className={`fixed top-[64] left-0 h-[calc(100vh-64px)] w-64 bg-[#0F766E] text-white overflow-y-auto scrollbar-hide z-40 transition-transform duration-300
   ${
     isSidebarOpen ? "translate-x-0" : "-translate-x-full"
   } lg:translate-x-0 lg:static lg:block`}

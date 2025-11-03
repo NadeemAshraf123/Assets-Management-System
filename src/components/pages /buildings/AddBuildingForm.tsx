@@ -62,7 +62,6 @@ const AddBuildingForm: React.FC<AddBuildingFormProps> = ({
 
   const { getAddressFromCoords, loading } = useReverseGeocode();
 
-  // ✅ Initialize React Hook Form
   const {
     register,
     handleSubmit,

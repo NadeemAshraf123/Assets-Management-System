@@ -1,72 +1,38 @@
-import { useRef, useState } from "react";
-import { useDispatch } from "react-redux";
-import { addBranch } from "../../../features/branches/BranchesSlice";
-import { useOutSideClick } from "../../../hooks/useOutSideClick";
+import React, { useState, useEffect, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "../../../app/Store";
+import { addBranch, updateBranch, fetchBranches } from "../../../features/branches/BranchesSlice";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MapContainer, TileLayer, useMapEvents, Marker, Popup } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
+import type { branchSchema, BranchFormData } from "../../../schemas/BranchSchemas";
+import { useOutSideClick } from "../../../hooks/useOutSideClick";
+import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import L from "leaflet";
+import axios from "axios";
+import "leaflet/dist/leaflet.css";
 
-
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-  iconUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-  shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-});
-
-
-const branchSchema = z.object({
-  name: z.string().min(2, "Branch name must be at least 2 characters"),
-  manager: z.string().min(2, "Manager name must be at least 2 characters"),
-  email: z.string().email("Enter a valid email address"),
-  phone: z
-    .string()
-    .regex(/^[+]?[\d\s-()]{10,}$/, "Enter a valid phone number"),
-  branchaddress: z.string().min(5, "Branch address must be at least 5 characters"),
-  city: z.string().min(2, "City name must be at least 2 characters"),
-  country: z.string().min(2, "Country name must be at least 2 characters"),
-  latitude: z.number().optional(),
-  longitude: z.number().optional(),
-});
-
-type BranchFormData = z.infer<typeof branchSchema>;
-
-
-const getAddressFromCoords = async (lat: number, lng: number): Promise<string> => {
-  try {
-    const API_KEY = 'pk.65958886264c7a690901d6e835474761';
-    const response = await fetch(
-      `https://us1.locationiq.com/v1/reverse?key=${API_KEY}&lat=${lat}&lon=${lng}&format=json`
-    );
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    return data.display_name || "Address not found";
-  } catch (error) {
-    console.error("Geocoding error:", error);
-    return "Address not found";
-  }
-};
-
-interface Props {
-  onClose?: () => void;
+interface BranchModalFormProps {
+  mode: "add" | "edit";
+  existingBranch?: BranchFormData & { id: string };
+  onClose: () => void;
 }
 
-const AddBranchForm: React.FC<Props> = ({ onClose }) => {
-  const dispatch = useDispatch();
+const BranchModalForm: React.FC<BranchModalFormProps> = ({
+  mode,
+  existingBranch,
+  onClose,
+}) => {
+  const dispatch = useDispatch<AppDispatch>();
   const modalRef = useRef<HTMLDivElement>(null);
-  useOutSideClick(modalRef, () => onClose?.());
+  useOutSideClick(modalRef, () => onClose());
 
-  const [marker, setMarker] = useState<[number, number] | null>(null);
+  const { branches } = useSelector((state: RootState) => state.branches);
+
+  const [marker, setMarker] = useState<[number, number] | null>(
+    existingBranch
+      ? [existingBranch.latitude || 0, existingBranch.longitude || 0]
+      : null
+  );
 
   const {
     register,
@@ -75,240 +41,250 @@ const AddBranchForm: React.FC<Props> = ({ onClose }) => {
     formState: { errors, isSubmitting },
   } = useForm<BranchFormData>({
     resolver: zodResolver(branchSchema),
-    defaultValues: {
-      name: "",
-      manager: "",
-      email: "",
-      phone: "",
-      branchaddress: "",
-      city: "",
-      country: "",
-    },
+    defaultValues:
+      mode === "edit" && existingBranch
+        ? existingBranch
+        : {
+            name: "",
+            manager: "",
+            email: "",
+            phone: "",
+            branchaddress: "",
+            city: "",
+            country: "",
+            latitude: 0,
+            longitude: 0,
+          },
   });
 
-  
-  const MapClickHandler = () => {
-    useMapEvents({
-      click: async (e) => {
-        const lat = e.latlng.lat;
-        const lng = e.latlng.lng;
+  useEffect(() => {
+    if (branches.length === 0) {
+      dispatch(fetchBranches());
+    }
+  }, [dispatch, branches]);
 
+  const LocationMarker = () => {
+    useMapEvents({
+      click(e) {
+        const { lat, lng } = e.latlng;
         setMarker([lat, lng]);
         setValue("latitude", lat);
         setValue("longitude", lng);
 
-        const address = await getAddressFromCoords(lat, lng);
-        setValue("branchaddress", address);
+        axios
+          .get(`https://nominatim.openstreetmap.org/reverse`, {
+            params: {
+              lat,
+              lon: lng,
+              format: "json",
+            },
+          })
+          .then((res) => {
+            const { address } = res.data;
+            setValue("city", address.city || address.town || address.village || "");
+            setValue("country", address.country || "");
+            setValue("branchaddress", res.data.display_name || "");
+          })
+          .catch((err) => console.error("Reverse geocode error:", err));
       },
     });
-    return null;
+    return marker ? (
+      <Marker position={marker} icon={L.icon({ iconUrl: "/marker-icon.png" })}></Marker>
+    ) : null;
   };
-
 
   const onSubmit = async (data: BranchFormData) => {
     try {
-      await dispatch(addBranch(data)).unwrap();
-      onClose?.();
+      if (mode === "add") {
+        await dispatch(addBranch(data)).unwrap();
+      } else if (mode === "edit" && existingBranch) {
+        await dispatch(updateBranch({ id: existingBranch.id, data })).unwrap();
+      }
+      onClose();
     } catch (error) {
-      console.error("Failed to add branch:", error);
+      console.error("Error saving branch:", error);
     }
   };
 
   return (
-   <div
-  ref={modalRef}
-  className="bg-white rounded-md space-y-6 overflow-y-auto max-h-screen"
->
-
-
-      <div className="flex overflow-y-auto items-center bg-[#0F766E33] justify-between p-6">
-        <div className="">
-          <h2 className="text-2xl font-bold text-gray-800">Add New Branch</h2>
-          <p className="text-sm text-gray-500">Add New Branch in system</p>
-        </div>
-        <button
-          onClick={onClose}
-          className="text-gray-500 hover:text-gray-700 text-xl font-bold"
-        >
-          ×
-        </button>
-      </div>
-
-    
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-6">
-        <h3 className="text-lg font-semibold text-gray-700">
-          Branch Information
-        </h3>
-
-    
-        <div>
-          <label className="block text-xs">Branch Name</label>
-          <input
-            type="text"
-            {...register("name")}
-            placeholder="Branch Name"
-            className={`w-full px-4 py-2 border rounded-md text-sm ${
-              errors.name ? "border-red-500" : "border-gray-300"
-            } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-          />
-          {errors.name && (
-            <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>
-          )}
-        </div>
-
-    
-        <div className="grid grid-cols-2 gap-4">
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
+      <div
+        ref={modalRef}
+        className="bg-white rounded-md shadow-lg w-full max-w-2xl overflow-y-auto max-h-[90vh]"
+      >
+        <div className="flex items-center justify-between bg-[#0F766E33] p-6">
           <div>
-            <label className="block text-xs">City</label>
-            <input
-              type="text"
-              {...register("city")}
-              placeholder="City"
-              className={`w-full px-4 py-2 border rounded-md text-sm ${
-                errors.city ? "border-red-500" : "border-gray-300"
-              } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-            />
-            {errors.city && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.city.message}
-              </p>
-            )}
-          </div>
-          <div>
-            <label className="block text-xs">Country</label>
-            <input
-              type="text"
-              {...register("country")}
-              placeholder="Country"
-              className={`w-full px-4 py-2 border rounded-md text-sm ${
-                errors.country ? "border-red-500" : "border-gray-300"
-              } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-            />
-            {errors.country && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.country.message}
-              </p>
-            )}
-          </div>
-        </div>
-
-        
-        <div>
-          <label className="block text-xs">Branch Manager</label>
-          <input
-            type="text"
-            {...register("manager")}
-            placeholder="Branch Manager"
-            className={`w-full px-4 py-2 border rounded-md text-sm ${
-              errors.manager ? "border-red-500" : "border-gray-300"
-            } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-          />
-          {errors.manager && (
-            <p className="text-red-500 text-xs mt-1">
-              {errors.manager.message}
+            <h2 className="text-2xl font-bold text-gray-800">
+              {mode === "add" ? "Add New Branch" : "Edit Branch"}
+            </h2>
+            <p className="text-sm text-gray-500">
+              {mode === "add"
+                ? "Add New Branch in system"
+                : "Edit existing branch details"}
             </p>
-          )}
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 text-xl font-bold"
+          >
+            ×
+          </button>
         </div>
 
-    
-        <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-6">
           <div>
-            <label className="block text-xs">Branch Email</label>
+            <label className="block text-sm font-medium mb-1">Branch Name</label>
+            <select
+              {...register("name")}
+              className={`w-full px-4 py-2 border rounded-md text-sm ${
+                errors.name ? "border-red-500" : "border-gray-300"
+              }`}
+            >
+              <option value="">Select Branch</option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.name}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+            {errors.name && (
+              <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Manager Name</label>
+            <input
+              type="text"
+              {...register("manager")}
+              className={`w-full px-4 py-2 border rounded-md text-sm ${
+                errors.manager ? "border-red-500" : "border-gray-300"
+              }`}
+              placeholder="Enter Manager Name"
+            />
+            {errors.manager && (
+              <p className="text-red-500 text-xs mt-1">{errors.manager.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Email</label>
             <input
               type="email"
               {...register("email")}
-              placeholder="Branch Email"
               className={`w-full px-4 py-2 border rounded-md text-sm ${
                 errors.email ? "border-red-500" : "border-gray-300"
-              } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              }`}
+              placeholder="Enter Email Address"
             />
             {errors.email && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.email.message}
-              </p>
+              <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
             )}
           </div>
+
           <div>
-            <label className="block text-xs">Phone Number</label>
+            <label className="block text-sm font-medium mb-1">Phone</label>
             <input
               type="text"
               {...register("phone")}
-              placeholder="Branch Phone Number"
               className={`w-full px-4 py-2 border rounded-md text-sm ${
                 errors.phone ? "border-red-500" : "border-gray-300"
-              } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              }`}
+              placeholder="Enter Phone Number"
             />
             {errors.phone && (
+              <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>
+            )}
+          </div>
+
+          <div className="h-64 border rounded-md overflow-hidden">
+            <MapContainer
+              center={marker || [31.5204, 74.3587]}
+              zoom={13}
+              className="h-full w-full"
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution="© OpenStreetMap contributors"
+              />
+              <LocationMarker />
+            </MapContainer>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Address</label>
+            <textarea
+              {...register("branchaddress")}
+              rows={2}
+              className={`w-full px-4 py-2 border rounded-md text-sm ${
+                errors.branchaddress ? "border-red-500" : "border-gray-300"
+              }`}
+            />
+            {errors.branchaddress && (
               <p className="text-red-500 text-xs mt-1">
-                {errors.phone.message}
+                {errors.branchaddress.message}
               </p>
             )}
           </div>
-        </div>
 
-    
-        <div>
-          <label className="block text-xs">Branch Address</label>
-          <input
-            type="text"
-            {...register("branchaddress")}
-            placeholder="Click on map to set Branch Address"
-            className={`w-full px-4 py-2 border rounded-md text-sm ${
-              errors.branchaddress ? "border-red-500" : "border-gray-300"
-            } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-          />
-          {errors.branchaddress && (
-            <p className="text-red-500 text-xs mt-1">
-              {errors.branchaddress.message}
-            </p>
-          )}
-        </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">City</label>
+              <input
+                {...register("city")}
+                type="text"
+                className={`w-full px-4 py-2 border rounded-md text-sm ${
+                  errors.city ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.city && (
+                <p className="text-red-500 text-xs mt-1">{errors.city.message}</p>
+              )}
+            </div>
 
-        
-        <div className="w-full h-48 rounded-md overflow-hidden">
-          <MapContainer
-            center={[31.5204, 74.3587]}
-            zoom={12}
-            className="h-full w-full"
-          >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution="&copy; OpenStreetMap contributors"
-            />
-            <MapClickHandler />
-            {marker && (
-              <Marker position={marker}>
-                <Popup>Selected Branch Location</Popup>
-              </Marker>
-            )}
-          </MapContainer>
-        </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Country</label>
+              <input
+                {...register("country")}
+                type="text"
+                className={`w-full px-4 py-2 border rounded-md text-sm ${
+                  errors.country ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.country && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.country.message}
+                </p>
+              )}
+            </div>
+          </div>
 
-        
-        <div className="flex justify-end gap-4 pt-4">
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className={`bg-teal-600 cursor-pointer text-white px-6 py-2 rounded-md text-sm hover:bg-teal-700 ${
-              isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-          >
-            {isSubmitting ? "Adding..." : "Add"}
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isSubmitting}
-            className={`border cursor-pointer border-gray-300 text-gray-700 px-6 py-2 rounded-md text-sm hover:bg-gray-100 ${
-              isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
+          <div className="flex justify-end gap-4 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="border border-gray-300 text-gray-700 px-6 py-2 rounded-md"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="bg-teal-600 text-white px-6 py-2 rounded-md hover:bg-teal-700"
+            >
+              {isSubmitting
+                ? mode === "add"
+                  ? "Adding..."
+                  : "Updating..."
+                : mode === "add"
+                ? "Add Branch"
+                : "Save Changes"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
 
-export default AddBranchForm;
+export default BranchModalForm;

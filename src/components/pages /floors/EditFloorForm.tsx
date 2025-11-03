@@ -12,6 +12,10 @@ import {
 } from "../../../features/floors/FloorsSlice";
 import type { RootState } from "../../../app/Store";
 
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
 const floorSchema = z.object({
   branchId: z.string().min(1, "Branch is required"),
   buildingId: z.string().min(1, "Building is required"),
@@ -49,11 +53,19 @@ const EditFloorForm: React.FC<EditFloorFormProps> = ({
   const { branches } = useSelector((state: RootState) => state.branches);
   const { buildings } = useSelector((state: RootState) => state.buildings);
   const { floors } = useSelector((state: RootState) => state.floors);
-
   const floorNames = useSelector(selectFloorNames);
 
   const [fileName, setFileName] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [selectedCoords, setSelectedCoords] = useState<[number, number] | null>(
+    null
+  );
+
+  const customIcon = L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
+    iconSize: [32, 32],
+  });
 
   useEffect(() => {
     dispatch(fetchBranches());
@@ -64,6 +76,21 @@ const EditFloorForm: React.FC<EditFloorFormProps> = ({
       setFileName("liberty_groundfloor.pdf");
     }
   }, [dispatch, initialData]);
+
+  // 🧩 Auto-select coordinates when modal opens with building
+  useEffect(() => {
+    if (initialData?.buildingId && buildings.length > 0) {
+      const foundBuilding = buildings.find(
+        (b) => b.id.toString() === initialData.buildingId.toString()
+      );
+      if (foundBuilding && foundBuilding.latitude && foundBuilding.longitude) {
+        setSelectedCoords([
+          Number(foundBuilding.latitude),
+          Number(foundBuilding.longitude),
+        ]);
+      }
+    }
+  }, [initialData, buildings]);
 
   const {
     register,
@@ -84,6 +111,26 @@ const EditFloorForm: React.FC<EditFloorFormProps> = ({
       floorPlan: undefined,
     },
   });
+
+  const handleBuildingChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedId = e.target.value;
+    setValue("buildingId", selectedId);
+    const selectedBuilding = buildings.find(
+      (b) => b.id.toString() === selectedId
+    );
+    if (
+      selectedBuilding &&
+      selectedBuilding.latitude &&
+      selectedBuilding.longitude
+    ) {
+      setSelectedCoords([
+        Number(selectedBuilding.latitude),
+        Number(selectedBuilding.longitude),
+      ]);
+    } else {
+      setSelectedCoords(null);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -130,7 +177,7 @@ const EditFloorForm: React.FC<EditFloorFormProps> = ({
           defaultChecked={checked}
           className="sr-only peer"
         />
-        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+        <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-emerald-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
       </label>
     </div>
   );
@@ -170,7 +217,7 @@ const EditFloorForm: React.FC<EditFloorFormProps> = ({
             </label>
             <select
               {...register("branchId")}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 bg-white"
             >
               <option value="">Select Branch</option>
               {branches.map((branch) => (
@@ -192,7 +239,8 @@ const EditFloorForm: React.FC<EditFloorFormProps> = ({
             </label>
             <select
               {...register("buildingId")}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white"
+              onChange={handleBuildingChange}
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 bg-white"
             >
               <option value="">Select Building</option>
               {buildings.map((building) => (
@@ -208,13 +256,15 @@ const EditFloorForm: React.FC<EditFloorFormProps> = ({
             )}
           </div>
 
+          
+
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Floor Name
             </label>
             <select
               {...register("floorName")}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 bg-white"
             >
               <option value="">Select Floor</option>
               {Array.isArray(floors) && floors.length > 0 ? (
@@ -242,7 +292,7 @@ const EditFloorForm: React.FC<EditFloorFormProps> = ({
               <input
                 type="number"
                 {...register("floorNumber")}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500"
               />
               {errors.floorNumber && (
                 <p className="text-red-500 text-xs mt-1">
@@ -257,7 +307,7 @@ const EditFloorForm: React.FC<EditFloorFormProps> = ({
               <input
                 type="number"
                 {...register("totalArea")}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500"
               />
               {errors.totalArea && (
                 <p className="text-red-500 text-xs mt-1">
@@ -314,11 +364,28 @@ const EditFloorForm: React.FC<EditFloorFormProps> = ({
             label="Ground Maintenance"
           />
 
+          {selectedCoords ? (
+            <MapContainer
+              center={selectedCoords}
+              zoom={16}
+              className="h-48 w-full mb-4 rounded-lg shadow-md"
+            >
+              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              <Marker position={selectedCoords} icon={customIcon}>
+                <Popup>Building Location</Popup>
+              </Marker>
+            </MapContainer>
+          ) : (
+            <p className="text-gray-500 mb-4">
+              Select a building to view its location on map
+            </p>
+          )}
+
           <div className="flex justify-end gap-3 pt-4">
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium disabled:opacity-50"
             >
               {isSubmitting ? "Saving..." : "Save Changes"}
             </button>

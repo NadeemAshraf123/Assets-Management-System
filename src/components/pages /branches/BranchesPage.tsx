@@ -17,6 +17,7 @@ import { useConfirmDelete } from "../../../hooks/useConfirmDelete";
 import ConfirmDelete from "../../common/deletrconfirmation/ConfirmDelete";
 import { Settings } from "lucide-react";
 import logo from "../../../assets/logo.png";
+import BranchFormModal from "./BranchFormModal";
 
 const BranchesPage: React.FC = () => {
   
@@ -189,7 +190,7 @@ const branchNames = useSelector((state: RootState) => state.branches.branchNames
       </div>
 
 
-       {showAddModal && (
+       {/* {showAddModal && (
         <div className="fixed h-screen inset-0 bg-black/50 bg-opacity-40 flex items-center justify-center z-50">
           <div className="bg-white rounded-md shadow-lg w-full max-w-2xl relative">
             <AddBranchForm onClose={closeModal} />
@@ -206,7 +207,22 @@ const branchNames = useSelector((state: RootState) => state.branches.branchNames
             />
           </div>
         </div>
-      )}
+      )} */}
+
+      {(showAddModal || selectedBranch) && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="bg-white rounded-md shadow-lg w-full max-w-3xl relative">
+      <BranchFormModal
+        onClose={() => {
+          setShowAddModal(false);
+          setSelectedBranch(null);
+        }}
+        branch={selectedBranch || undefined}
+      />
+    </div>
+  </div>
+)}
+
 
       <ConfirmDelete
         isOpen={isOpen}

@@ -27,6 +27,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
 
   const filteredOptions = suggestions.filter(
+    
     (opt) =>
       opt &&
       opt.toLowerCase().includes(searchTerm.toLowerCase())
@@ -37,6 +38,10 @@ const SearchBar: React.FC<SearchBarProps> = ({
     setSearchTerm(option);
     setIsOpen(false);
   };
+
+  console.log("Suggestions:", suggestions);
+console.log("Types:", suggestions.map(opt => typeof opt));
+
 
   return (
     <div ref={wrapperRef} className="relative w-full">

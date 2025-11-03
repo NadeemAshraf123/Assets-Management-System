@@ -21,12 +21,14 @@ export interface Branch {
 
 interface BranchesState {
   branches: Branch[];
+  branchNames: string[];
   loading: boolean;
   error: string | null;
 }
 
 const initialState: BranchesState = {
   branches: [],
+  branchNames: [],
   loading: false,
   error: null,
 };

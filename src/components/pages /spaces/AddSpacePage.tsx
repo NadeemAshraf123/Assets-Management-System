@@ -1,4 +1,4 @@
-import React, { useEffect,useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ChevronLeft } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
@@ -43,6 +43,9 @@ type SpaceFormData = z.infer<typeof SpaceSchema>;
 const AddSpacePage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [spaceImage, setSpaceImage] = useState<File | null>(null);
+  const [selectedCoords, setSelectedCoords] = useState<[number, number] | null>(
+    null
+  );
 
   const {
     register,
@@ -80,12 +83,12 @@ const AddSpacePage: React.FC = () => {
   }, [isSubmitSuccessful, reset]);
 
   const convertToBase64 = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (error) => reject(error);
-  });
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
 
   const branchName = watch("branchName");
   const buildingName = watch("buildingName");
@@ -111,29 +114,45 @@ const AddSpacePage: React.FC = () => {
   const floorNames = floors.map((f) => f.floorName);
   const spaceNames = spaces.map((s) => s.name);
 
-const onSubmit = async (data: SpaceFormData) => {
-  try {
-    let imageString = "";
-    if (spaceImage) {
-      imageString = await convertToBase64(spaceImage);
+  const onSubmit = async (data: SpaceFormData) => {
+    try {
+      let imageString = "";
+      if (spaceImage) {
+        imageString = await convertToBase64(spaceImage);
+      }
+
+      const payload = {
+        ...data,
+        spaceImage: imageString,
+      };
+
+      await dispatch(addSpace(payload)).unwrap();
+      toast.success("Space added successfully!");
+      reset();
+      setSpaceImage(null);
+    } catch (err) {
+      toast.error("Failed to add space!");
+      console.error(err);
     }
+  };
 
-    const payload = {
-      ...data,
-      spaceImage: imageString,
-    };
-
-    await dispatch(addSpace(payload)).unwrap();
-    toast.success("Space added successfully!");
-    reset();
-    setSpaceImage(null);
-  } catch (err) {
-    toast.error("Failed to add space!");
-    console.error(err);
-  }
-};
-
-
+  useEffect(() => {
+    if (buildingName) {
+      const selectedBuilding = buildings.find((b) => b.name === buildingName);
+      if (
+        selectedBuilding &&
+        selectedBuilding.latitude &&
+        selectedBuilding.longitude
+      ) {
+        setSelectedCoords([
+          selectedBuilding.latitude,
+          selectedBuilding.longitude,
+        ]);
+      }
+    } else {
+      setSelectedCoords(null);
+    }
+  }, [buildingName, buildings]);
 
   return (
     <div className="min-h-screen bg-[#F7F8FA] px-6">
@@ -362,19 +381,21 @@ const onSubmit = async (data: SpaceFormData) => {
               )}
             </div>
 
-            <div className="mt-4 border rounded overflow-hidden">
-              <MapContainer
-                center={[31.582045, 74.329376]}
-                zoom={13}
-                className="h-48 w-full rounded-lg"
-              >
-                <TileLayer
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  attribution="&copy; OpenStreetMap contributors"
-                />
-                <Marker position={[31.582045, 74.329376]} />
-              </MapContainer>
-            </div>
+            {selectedCoords && (
+              <div className="mt-4 border rounded overflow-hidden">
+                <MapContainer
+                  center={selectedCoords}
+                  zoom={15}
+                  className="h-48 w-full rounded-lg"
+                >
+                  <TileLayer
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution="&copy; OpenStreetMap contributors"
+                  />
+                  <Marker position={selectedCoords} />
+                </MapContainer>
+              </div>
+            )}
 
             <div className="flex justify-end gap-3 pt-6">
               <button

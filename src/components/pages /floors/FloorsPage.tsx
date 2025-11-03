@@ -327,6 +327,7 @@ const handleCloseFloorPlan = () => {
         isOpen={isFloorPlanModalOpen}
         onClose={handleCloseFloorPlan}
         floorPlanUrl={selectedFloorPlan}
+        
         />
     </div>
   );

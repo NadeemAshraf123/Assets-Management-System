@@ -1,5 +1,8 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
+import { createSelector } from "@reduxjs/toolkit";
+
+
 
 const BASE_URL = "http://localhost:3001/floors";
 
@@ -27,9 +30,17 @@ export const deleteFloor = createAsyncThunk("floors/deleteFloor", async (id: str
 });
 
 
-export const selectFloorNames = (state) => state.floors.floors.map((f) => f.floorName);
-export const selectBuildingTypes = (state) => [...new Set(state.floors.floors.map((f) => f.buildingName))];
+export const selectFloors = (state: any) => state.floors.floors;
 
+export const selectFloorNames = createSelector(
+  [selectFloors],
+  (floors) => floors.map((floor) => floor.floorName)
+);
+
+export const selectBuildingTypes = createSelector(
+  [selectFloors],
+  (floors) => floors.map((floor) => floor.buildingName)
+)
 
 const floorsSlice = createSlice({
   name: "floors",

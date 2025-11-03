@@ -4,7 +4,7 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 
 export interface Building {
-  id: number;
+  id: string;
   name: string;
   branchId: number;
   branchName?: string;

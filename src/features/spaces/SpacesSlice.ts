@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, createSelector } from "@reduxjs/toolkit";
 import axios from "axios";
 
 export interface Space {
@@ -32,12 +32,10 @@ export const fetchSpaces = createAsyncThunk("spaces/fetchSpaces", async () => {
   return res.data;
 });
 
-
 export const addSpace = createAsyncThunk("spaces/addSpace", async (space: Space) => {
   const res = await axios.post("http://localhost:3001/spaces", space);
   return res.data;
 });
-
 
 export const updateSpace = createAsyncThunk(
   "spaces/updateSpace",
@@ -47,17 +45,26 @@ export const updateSpace = createAsyncThunk(
   }
 );
 
-
 export const deleteSpace = createAsyncThunk("spaces/deleteSpace", async (id: string) => {
   await axios.delete(`http://localhost:3001/spaces/${id}`);
   return id;
 });
 
-export const selectSpaceNames = (state: any) =>
-  [...new Set(state.spaces.spaces.map((s: Space) => s.spaceName))];
 
-export const selectSpaceManagers = (state: any) =>
-  [...new Set(state.spaces.spaces.map((s: Space) => s.spaceManager))];
+
+const selectSpacesState = (state: any) => state.spaces.spaces;
+
+export const selectSpaceNames = createSelector(
+  [selectSpacesState],
+  (spaces) => [...new Set(spaces.map((s: Space) => s.spaceName))]
+);
+
+export const selectSpaceManagers = createSelector(
+  [selectSpacesState],
+  (spaces) => [...new Set(spaces.map((s: Space) => s.spaceManager))]
+);
+
+
 
 const spacesSlice = createSlice({
   name: "spaces",

@@ -1,8 +1,11 @@
 import React, { useRef } from "react";
 import { useForm } from "react-hook-form";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSelector } from "react-redux";
+import type { RootState } from "../../../app/Store";
 import { selectFloorNames } from "../../../features/floors/FloorsSlice";
 import { selectBuildingNames } from "../../../features/building/BuildingSlice";
 import { useOutSideClick } from "../../../hooks/useOutSideClick";
@@ -16,6 +19,8 @@ interface Branch {
 interface Building {
   id: number | string;
   name: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 interface AddFloorFormProps {
@@ -46,12 +51,14 @@ const convertToBase64 = (file: File): Promise<string> =>
 
 const AddFloorForm: React.FC<AddFloorFormProps> = ({
   branches,
-  buildings,
+  buildings: propBuildings,
   onSubmit,
   onCancel,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   useOutSideClick(modalRef, () => onCancel?.());
+
+  const buildings = useSelector((state: RootState) => state.buildings.buildings);
 
   const floorNames = useSelector(selectFloorNames);
   const buildingNames = useSelector(selectBuildingNames);
@@ -74,30 +81,36 @@ const AddFloorForm: React.FC<AddFloorFormProps> = ({
     },
   });
 
-  
+  const watchBranch = watch("branchId");
+  const watchBuilding = watch("buildingId");
+  const watchFile = watch("floorPlan");
+
+  const selectedBuilding = buildings.find(
+    (b) => String(b.id) === String(watchBuilding)
+  );
+
   const onFormSubmit = async (formData: any) => {
-    
     const floorFile =
       formData.floorPlan instanceof FileList
         ? formData.floorPlan[0]
         : formData.floorPlan?.[0];
 
-    const floorPlanBase64 = floorFile
-      ? await convertToBase64(floorFile)
-      : "";
+    const floorPlanBase64 = floorFile ? await convertToBase64(floorFile) : "";
 
     const selectedBranch = branches.find(
       (b) => String(b.id) === String(formData.branchId)
     );
-    const selectedBuilding = buildings.find(
+    const selectedBuildingData = buildings.find(
       (b) => String(b.id) === String(formData.buildingId)
     );
 
     const data = {
       branchId: selectedBranch?.id || "",
       branchName: selectedBranch?.name || "",
-      buildingId: selectedBuilding?.id || "",
-      buildingName: selectedBuilding?.name || "",
+      buildingId: selectedBuildingData?.id || "",
+      buildingName: selectedBuildingData?.name || "",
+      latitude: selectedBuildingData?.latitude || null,
+      longitude: selectedBuildingData?.longitude || null,
       floorName: formData.floorName,
       floorNumber: formData.floorNumber,
       totalArea: formData.totalArea,
@@ -108,10 +121,6 @@ const AddFloorForm: React.FC<AddFloorFormProps> = ({
 
     onSubmit(data);
   };
-
-  const watchBranch = watch("branchId");
-  const watchBuilding = watch("buildingId");
-  const watchFile = watch("floorPlan");
 
   return (
     <div
@@ -277,6 +286,50 @@ const AddFloorForm: React.FC<AddFloorFormProps> = ({
             </p>
           )}
         </div>
+
+        {selectedBuilding?.latitude && selectedBuilding?.longitude ? (
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              Building Location
+            </h3>
+
+            <MapContainer
+              center={[selectedBuilding.latitude, selectedBuilding.longitude]}
+              zoom={15}
+              scrollWheelZoom={false}
+              dragging={false}
+              doubleClickZoom={false}
+              touchZoom={false}
+              zoomControl={false}
+              className="h-48 w-full rounded-lg z-0"
+            >
+              <TileLayer
+                attribution="&copy; OpenStreetMap contributors"
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <Marker
+                position={[
+                  selectedBuilding.latitude,
+                  selectedBuilding.longitude,
+                ]}
+                icon={L.icon({
+                  iconUrl:
+                    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+                  iconSize: [25, 41],
+                  iconAnchor: [12, 41],
+                })}
+              >
+                <Popup>{selectedBuilding.name}</Popup>
+              </Marker>
+            </MapContainer>
+          </div>
+        ) : (
+          watchBuilding && (
+            <p className="text-sm text-gray-500 mt-4">
+              Selected building has no location data.
+            </p>
+          )
+        )}
 
         <div className="flex justify-end gap-3 pt-4">
           <button

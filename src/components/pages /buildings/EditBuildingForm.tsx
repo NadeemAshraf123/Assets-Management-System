@@ -1,4 +1,4 @@
-import { useState, useEffect,useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { X, MapPin } from "lucide-react";
@@ -43,8 +43,7 @@ const EditBuildingForm: React.FC<EditBuildingFormProps> = ({
   const modalRef = useRef<HTMLDivElement>(null);
   useOutSideClick(modalRef, () => onClose?.());
   const { getAddressFromCoords, loading } = useReverseGeocode();
-
-
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
 
   useEffect(() => {
     if (selectedBuilding) {
@@ -95,9 +94,12 @@ const EditBuildingForm: React.FC<EditBuildingFormProps> = ({
   };
 
   return (
-    <div  className="fixed max-h-screen overflow-y-auto inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div ref={modalRef} className="bg-white rounded-2xl shadow-lg w-[750px] max-h-screen overflow-y-auto">
-        <div  className="flex items-center justify-between bg-[#d5e7e0] px-6 py-4 rounded-t-2xl">
+    <div className="fixed max-h-screen overflow-y-auto inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div
+        ref={modalRef}
+        className="bg-white rounded-2xl shadow-lg w-[750px] max-h-screen overflow-y-auto"
+      >
+        <div className="flex items-center justify-between bg-[#d5e7e0] px-6 py-4 rounded-t-2xl">
           <div>
             <h2 className="text-lg font-semibold">Edit Building</h2>
             <p className="text-sm text-gray-600">Edit Building in system</p>
@@ -191,7 +193,10 @@ const EditBuildingForm: React.FC<EditBuildingFormProps> = ({
               onChange={(e) =>
                 setFormData({ ...formData, fullAddress: e.target.value })
               }
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10"
+              disabled={!isEditingAddress}
+              className={`w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 ${
+                !isEditingAddress ? "bg-gray-100 cursor-not-allowed" : ""
+              }`}
             />
             <MapPin className="absolute right-3 top-9 w-5 h-5 text-gray-600" />
           </div>
@@ -207,10 +212,33 @@ const EditBuildingForm: React.FC<EditBuildingFormProps> = ({
                 position={[formData.latitude, formData.longitude]}
                 icon={markerIcon}
               />
-              <MapClickHandler />
+              {isEditingAddress && <MapClickHandler />}
             </MapContainer>
-            {loading && ( 
-              <p className="text-sm text-emerald-700 mt-2">Fetching address...</p>
+
+            {loading && (
+              <p className="text-sm text-emerald-700 mt-2">
+                Fetching address...
+              </p>
+            )}
+          </div>
+
+          <div className="flex justify-end mt-2">
+            {!isEditingAddress ? (
+              <button
+                type="button"
+                onClick={() => setIsEditingAddress(true)}
+                className="text-emerald-700 text-sm font-medium hover:underline"
+              >
+                Edit Address
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsEditingAddress(false)}
+                className="text-gray-600 text-sm font-medium hover:underline"
+              >
+                Done Editing
+              </button>
             )}
           </div>
 

@@ -58,6 +58,9 @@ const EditSpacePage: React.FC = () => {
   const { floors } = useSelector((state: RootState) => state.floors);
   const { spaces, loading } = useSelector((state: RootState) => state.spaces);
   const [spaceImage, setSpaceImage] = useState<File | null>(null);
+  const [selectedCoords, setSelectedCoords] = useState<[number, number] | null>(
+    null
+  );
 
   const space = spaces.find((s) => String(s.id) === id);
 
@@ -82,21 +85,24 @@ const EditSpacePage: React.FC = () => {
     dispatch(fetchSpaces());
   }, [dispatch]);
 
-  useEffect(() => {
-    if (space) {
-      reset({
-        branchName: space.branchName,
-        buildingName: space.buildingName,
-        floorName: space.floorName,
-        spaceName: space.spaceName,
-        spaceArea: space.spaceArea,
-        metaType: space.metaType,
-        parentSpace: space.parentSpace,
-        spaceCondition: space.spaceCondition,
-        spaceManager: space.spaceManager,
-      });
-    }
-  }, [space, reset]);
+useEffect(() => {
+  if (!loading && space) {
+    reset({
+      branchName: space.branchName || "",
+      buildingName: space.buildingName || "",
+      floorName: space.floorName || "",
+      spaceName: space.spaceName || "",
+      spaceArea: space.spaceArea || "",
+      metaType: space.metaType || "",
+      parentSpace: space.parentSpace || "",
+      spaceCondition: space.spaceCondition || "",
+      spaceManager: space.spaceManager || "",
+    });
+  }
+}, [loading, space, reset]);
+
+
+
 
   const branchNames = branches.map((b) => b.name);
   const buildingNames = buildings.map((b) => b.name);
@@ -134,6 +140,20 @@ const EditSpacePage: React.FC = () => {
       toast.error("Failed to update space!");
     }
   };
+
+    useEffect(() => {
+    if (buildingName) {
+      const selectedBuilding = buildings.find((b) => b.name === buildingName);
+      if (selectedBuilding?.latitude && selectedBuilding?.longitude) {
+        setSelectedCoords([
+          selectedBuilding.latitude,
+          selectedBuilding.longitude,
+        ]);
+      }
+    } else {
+      setSelectedCoords(null);
+    }
+  }, [buildingName, buildings]);
 
   if (loading) return <p className="p-6">Loading...</p>;
   if (!space) return <p className="p-6 text-red-500">Space not found.</p>;
@@ -405,19 +425,21 @@ const EditSpacePage: React.FC = () => {
               )}
             </div>
 
-            <div className="mt-4 border rounded overflow-hidden">
-              <MapContainer
-                center={[31.582045, 74.329376]}
-                zoom={13}
-                className="h-48 w-full rounded-lg"
-              >
-                <TileLayer
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  attribution="&copy; OpenStreetMap contributors"
-                />
-                <Marker position={[31.582045, 74.329376]} />
-              </MapContainer>
-            </div>
+            {selectedCoords && (
+              <div className="mt-4 border rounded overflow-hidden">
+                <MapContainer
+                  center={selectedCoords}
+                  zoom={15}
+                  className="h-48 w-full rounded-lg"
+                >
+                  <TileLayer
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution="&copy; OpenStreetMap contributors"
+                  />
+                  <Marker position={selectedCoords} />
+                </MapContainer>
+              </div>
+            )}
 
             <div className="flex justify-end gap-3 pt-6">
               <button

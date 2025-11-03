@@ -55,7 +55,6 @@ const BuildingsPage = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const buildingNames = useSelector(selectBuildingNames);
   const buildingTypes = useSelector(selectBuildingTypes);
-  
 
   useEffect(() => {
     dispatch(fetchBuildings() as any);
@@ -185,7 +184,9 @@ const BuildingsPage = () => {
           <div className="flex justify-between">
             <div className="flex gap-2">
               <Settings size={20} className="text-white items-center" />
-              <h1 className=" text-sm md:text-1xl font-semibold text-white">Buildings</h1>
+              <h1 className=" text-sm md:text-1xl font-semibold text-white">
+                Buildings
+              </h1>
             </div>
             <button
               className="bg-blue-600 text-white text-xs px-1 md:px-3 rounded hover:bg-blue-700 flex items-center gap-1 md:gap-2"
